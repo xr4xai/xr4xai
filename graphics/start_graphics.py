@@ -3,7 +3,7 @@
 # switching out graphics_loop.py with an actual executable). 
 # Python system progaramming is, perhaps, the worst thing. Also right now, this almost definitely only works with Unix, or even just my Mac
 # Just some things to think about.
-
+# TODO FIX FIX FIX FIX FIX FIX FIX FIX FIX
 import os
 import sys
 
@@ -21,7 +21,6 @@ def parent():
     if pid == 0: # child process
         os.close(fd_write)
         child(fd_read)
-        os._exit(0)
     else:        # parent
         os.close(fd_read)
         os.dup2(fd_write,1)

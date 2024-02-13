@@ -35,12 +35,13 @@ class Graph:
     
     def print_tags(self):
         if not self.touched: return
-        print('\033[36m')
+        #print('\033[36m')
         for i in self.tag_node_dict:
-            print("  Tracking ID: ", self.tag_node_dict[i].tracking_id)
-            print("  SNN ID:      ", self.tag_node_dict[i].snn_id)
-            print("  Node type:   ", self.tag_node_dict[i].node_type)
-            print("  Position:    ", self.tag_node_dict[i].posvec)
-            print("  Rotation:    ", self.tag_node_dict[i].rotvec)
+            print("Track", end="#")
+            print(self.tag_node_dict[i].tracking_id, end="#")
+            print(self.tag_node_dict[i].snn_id, end = "#")
+            print(self.tag_node_dict[i].node_type, end = "#")
+            print(self.tag_node_dict[i].posvec, end = "#")
+            print(self.tag_node_dict[i].rotvec)
         print('\033[0m')
         self.touched = False
