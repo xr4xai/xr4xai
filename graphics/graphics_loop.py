@@ -7,7 +7,7 @@ sys.path.append(dir_path)
 import data_structures
 sys.path.remove(dir_path)
 
-from PyQt5 import QtCore, QtGui, QtOpenGL, QtWidgets
+from PyQt6 import QtCore, QtGui, QtOpenGL,  QtOpenGLWidgets, QtWidgets
 import OpenGL.GL as gl
 from OpenGL import GLU
 
@@ -19,16 +19,17 @@ import re
 import math
 
 # Display extends a QGLWidget and will be what OpenGL draws everything in
-class Display(QtOpenGL.QGLWidget):
+class Display(QtOpenGLWidgets.QOpenGLWidget):
 
     def __init__(self, parent = None, G = None):
             self.parent = parent
-            QtOpenGL.QGLWidget.__init__(self, parent)
+            QtOpenGLWidgets.QOpenGLWidget.__init__(self, parent)
             self.G = G
 
     # I think this is called after the window is launched? not surer
     def initializeGL(self):
-        self.qglClearColor(QtGui.QColor(0, 0, 0))
+
+        gl.glClearColor(0, 0, 0, 1)
         #gl.glEnable(gl.GL_DEPTH_TEST
 
     # changes some things on resize
@@ -40,6 +41,7 @@ class Display(QtOpenGL.QGLWidget):
     # Called everytime updateGL happens. Draws everything to the screen
     def paintGL(self):
         #gl.glColor(0,0,0)
+
         gl.glClear(gl.GL_COLOR_BUFFER_BIT )#| gl.GL_DEPTH_BUFFER_BIT)
         #gl.glLoadIdentity();
         
@@ -175,7 +177,7 @@ class DisplayWindow(QtWidgets.QMainWindow):
         # Adds a timer that refreshes the display every half second
         timer = QtCore.QTimer(self)
         timer.setInterval(500)   # period, in milliseconds
-        timer.timeout.connect(display.updateGL)
+        timer.timeout.connect(display.paintGL)
         timer.start()
 
 
@@ -187,7 +189,7 @@ def start_display(G):
     win = DisplayWindow(G)
     win.show()
 
-    app.exec_()
+    app.exec()
 
 # Pulls lines from stdin and updates graph structure
 def update_graph(G):
