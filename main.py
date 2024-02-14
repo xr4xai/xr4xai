@@ -30,7 +30,7 @@ if __name__ == "__main__":
     G.tag_node_dict[1] = data_structures.Node(tracking_id = 1, node_type="Calibration")
     G.tag_node_dict[2] = data_structures.Node(tracking_id = 2, node_type="Calibration")
 
-
+   
     gui_dict = {}
 
     # inits Qt window 

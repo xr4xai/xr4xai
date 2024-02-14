@@ -19,6 +19,13 @@ class Edge:
     source_snn_id = -1
     sink_snn_id = -1
 
+    def __init__(self, **kwargs):
+        if("snn_id" in kwargs): self.snn_id = kwargs["snn_id"]
+        if("source_tracking_id" in kwargs): self.source_tracking_id = kwargs["source_tracking_id"]
+        if("sink_tracking_id" in kwargs): self.sink_tracking_id = kwargs["sink_tracking_id"]
+        if("source_snn_id" in kwargs): self.source_snn_id = kwargs["source_snn_id"]
+        if("sink_snn_id" in kwargs): self.sink_snn_id = kwargs["sink_snn_id"]
+
 class Hand:
     id = -1    
 
