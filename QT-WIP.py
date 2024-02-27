@@ -1,13 +1,13 @@
 import sys
 from PyQt6.QtWidgets import QGraphicsScene, QGraphicsSceneMouseEvent, QGraphicsView, QGraphicsItem, QGraphicsRectItem, QGraphicsEllipseItem, QApplication, QPushButton
 from PyQt6.QtGui import QBrush, QMouseEvent, QPen, QColor
-from PyQt6.QtCore import Qt, QEvent, QObject
+from PyQt6.QtCore import Qt, QEvent, QObject, QLineF
 
 app = QApplication(sys.argv)
 
 # Defining a scene rect of 400x200, with it's origin at 0,0.
 # If we don't set this on creation, we can set it later with .setSceneRect
-class MyWidget(QGraphicsEllipseItem):
+class Node(QGraphicsEllipseItem):
     def __init__(self, x, y, curId, edgeFunction):
         self.d = 70
         self.r = self.d/2
@@ -44,6 +44,7 @@ class AGraphicsView(QGraphicsView):
         self.curId = 0
         self.nodeIds = []
         self.listOfEdges = []
+        self.edgeBuf = []
 
     def eventFilter(self, a0: QObject, a1: QEvent) -> bool:
         if a1.type() == QEvent.Type.MouseButtonPress:
@@ -57,7 +58,7 @@ class AGraphicsView(QGraphicsView):
 
     def addNodeEvent(self, event):
         if self.addNode == True:
-            widget = MyWidget(event.pos().x(), event.pos().y(), self.curId, self.connectNodes)  # Create an instance of MyWidget
+            widget = Node(event.pos().x(), event.pos().y(), self.curId, self.connectNodes)  # Create an instance of MyWidget
             self.curId+=1
 
             self.scene.addItem(widget)
@@ -70,9 +71,22 @@ class AGraphicsView(QGraphicsView):
     # def PressEvent(self, event: QGraphicsSceneMouseEvent):
     #     print("Button clicked!", self, event)  # Connect button click signal to a function
 
-    def connectNodes(self, pos1, id):
+    def connectNodes(self, pos, id):
         # print(pos1.x(), pos1.y(), id)
-        print(pos1, id)
+        print(f"Clicked on node #{id} at {pos}")
+        if len(self.edgeBuf) > 0:
+            self.edgeBuf.append([id, pos])
+            linkStr = f"{self.edgeBuf[0][0]}->{id}"
+            if linkStr not in self.listOfEdges:
+                print(self.edgeBuf)
+                pos1 = self.edgeBuf[0][1]
+                self.scene.addLine(QLineF(pos1, pos))
+
+                self.listOfEdges.append(linkStr)
+            self.edgeBuf = []
+        else:
+            self.edgeBuf.append([id, pos])
+            
         
 scene = QGraphicsScene(0, 0, 800, 600)
 # scene = AGraphicsScene()
