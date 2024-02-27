@@ -8,10 +8,12 @@ app = QApplication(sys.argv)
 # Defining a scene rect of 400x200, with it's origin at 0,0.
 # If we don't set this on creation, we can set it later with .setSceneRect
 class MyWidget(QGraphicsEllipseItem):
-    def __init__(self, x, y, edgeFunction):
+    def __init__(self, x, y, curId, edgeFunction):
         self.d = 70
         self.r = self.d/2
-        super().__init__(x-self.r, y-self.r, self.d, self.d)  # Initialize QPushButton with text "Click Me!"
+        self.id = curId
+        super().__init__(0-self.r, 0-self.r, self.d, self.d)  # Initialize QPushButton with text "Click Me!"
+        self.setPos(x, y)
         self.setZValue(10)
         self.addEdgeFunc = edgeFunction
         brush = QBrush(QColor("red"))
@@ -21,7 +23,7 @@ class MyWidget(QGraphicsEllipseItem):
         self.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsMovable | QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
-        self.addEdgeFunc(event.pos(), self.pos())
+        self.addEdgeFunc(self.pos(), self.id)
 
 
 class AGraphicsView(QGraphicsView):
@@ -39,6 +41,10 @@ class AGraphicsView(QGraphicsView):
 
         self.scene.addWidget(button)
 
+        self.curId = 0
+        self.nodeIds = []
+        self.listOfEdges = []
+
     def eventFilter(self, a0: QObject, a1: QEvent) -> bool:
         if a1.type() == QEvent.Type.MouseButtonPress:
             if self.addNode == True:
@@ -51,20 +57,22 @@ class AGraphicsView(QGraphicsView):
 
     def addNodeEvent(self, event):
         if self.addNode == True:
-            widget = MyWidget(event.pos().x(), event.pos().y(), self.connectNodes)  # Create an instance of MyWidget
+            widget = MyWidget(event.pos().x(), event.pos().y(), self.curId, self.connectNodes)  # Create an instance of MyWidget
+            self.curId+=1
 
             self.scene.addItem(widget)
             self.addNode = False
 
     def addNodePressed(self):
-        print("Pressed!")
+        print("Add node pressed!")
         self.addNode = True
 
     # def PressEvent(self, event: QGraphicsSceneMouseEvent):
     #     print("Button clicked!", self, event)  # Connect button click signal to a function
 
-    def connectNodes(self, pos1, pos2):
-        print(pos1, pos2)
+    def connectNodes(self, pos1, id):
+        # print(pos1.x(), pos1.y(), id)
+        print(pos1, id)
         
 scene = QGraphicsScene(0, 0, 800, 600)
 # scene = AGraphicsScene()
