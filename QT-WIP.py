@@ -20,14 +20,21 @@ class Node(QGraphicsEllipseItem):
         brush = QBrush(QColor("red"))
         # self.setFocusP(Qt.FocusPolicy.ClickFocus)
         self.setBrush(brush)
+        self._new = True
 
         self.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsMovable | QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
         self.setAcceptDrops(True)
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
-
-        self.addEdgeFunc(self, self.id)
+        if not self._new:
+            self.addEdgeFunc(self, self.id)
+        else:
+            self._new = False
         return super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        print("Release")
+        return super().mouseReleaseEvent(event)
 
 
 class AGraphicsView(QGraphicsView):
@@ -86,7 +93,9 @@ class AGraphicsView(QGraphicsView):
             if linkStr not in self.listOfEdges:
                 print(self.edgeBuf)
                 obj1 = self.edgeBuf[0][1]
-                self.scene.addLine(QLineF(obj1.pos(), obj.pos()))
+                nLine = QLineF(obj1.pos(), obj.pos())
+                pen = QPen(Qt.GlobalColor.blue, 5, Qt.PenStyle.SolidLine)
+                self.scene.addLine(nLine, pen)
 
                 self.listOfEdges.append(linkStr)
             self.edgeBuf = []
