@@ -1,7 +1,8 @@
 import sys
-from PyQt6.QtWidgets import QGraphicsScene, QGraphicsSceneMouseEvent, QGraphicsView, QGraphicsItem, QGraphicsRectItem, QGraphicsEllipseItem, QApplication, QPushButton
-from PyQt6.QtGui import QBrush, QMouseEvent, QPen, QColor
-from PyQt6.QtCore import Qt, QEvent, QObject, QLineF
+from typing import Iterable
+from PyQt6.QtWidgets import QGraphicsScene, QGraphicsSceneDragDropEvent, QGraphicsSceneHoverEvent, QGraphicsSceneMouseEvent, QGraphicsView, QGraphicsItem, QGraphicsRectItem, QGraphicsEllipseItem, QApplication, QPushButton
+from PyQt6.QtGui import QBrush, QDragEnterEvent, QMouseEvent, QPen, QColor, QDrag
+from PyQt6.QtCore import QRectF, Qt, QEvent, QObject, QLineF, QMimeData
 
 app = QApplication(sys.argv)
 
@@ -21,16 +22,18 @@ class Node(QGraphicsEllipseItem):
         self.setBrush(brush)
 
         self.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsMovable | QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
+        self.setAcceptDrops(True)
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
-        self.addEdgeFunc(self.pos(), self.id)
+
+        self.addEdgeFunc(self, self.id)
+        return super().mousePressEvent(event)
 
 
 class AGraphicsView(QGraphicsView):
     def __init__(self, scene: QGraphicsScene):
         super().__init__(scene)
         self.scene = scene
-        self.installEventFilter(self)
 
         button = QPushButton("Add Node")
         button.resize(750, 75)
@@ -46,15 +49,16 @@ class AGraphicsView(QGraphicsView):
         self.listOfEdges = []
         self.edgeBuf = []
 
-    def eventFilter(self, a0: QObject, a1: QEvent) -> bool:
-        if a1.type() == QEvent.Type.MouseButtonPress:
-            if self.addNode == True:
-                self.addNodeEvent(a1)
-                return True
-            else:
-                return False
-        return False
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+        if self.addNode == True:
+                self.addNodeEvent(event)
 
+        return super().mousePressEvent(event)
+    
+    def dragEnterEvent(self, event: QDragEnterEvent | None) -> None:
+        print("Enter")
+        
+        return super().dragEnterEvent(event)
 
     def addNodeEvent(self, event):
         if self.addNode == True:
@@ -71,21 +75,23 @@ class AGraphicsView(QGraphicsView):
     # def PressEvent(self, event: QGraphicsSceneMouseEvent):
     #     print("Button clicked!", self, event)  # Connect button click signal to a function
 
-    def connectNodes(self, pos, id):
+    def connectNodes(self, obj, id):
         # print(pos1.x(), pos1.y(), id)
-        print(f"Clicked on node #{id} at {pos}")
+        print(f"Clicked on node #{id} at {obj}")
         if len(self.edgeBuf) > 0:
-            self.edgeBuf.append([id, pos])
+            if id == self.edgeBuf[0][0]:
+                return
+            self.edgeBuf.append([id, obj])
             linkStr = f"{self.edgeBuf[0][0]}->{id}"
             if linkStr not in self.listOfEdges:
                 print(self.edgeBuf)
-                pos1 = self.edgeBuf[0][1]
-                self.scene.addLine(QLineF(pos1, pos))
+                obj1 = self.edgeBuf[0][1]
+                self.scene.addLine(QLineF(obj1.pos(), obj.pos()))
 
                 self.listOfEdges.append(linkStr)
             self.edgeBuf = []
         else:
-            self.edgeBuf.append([id, pos])
+            self.edgeBuf.append([id, obj])
             
         
 scene = QGraphicsScene(0, 0, 800, 600)
