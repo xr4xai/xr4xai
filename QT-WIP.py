@@ -62,11 +62,6 @@ class AGraphicsView(QGraphicsView):
 
         return super().mousePressEvent(event)
     
-    def dragEnterEvent(self, event: QDragEnterEvent | None) -> None:
-        print("Enter")
-        
-        return super().dragEnterEvent(event)
-
     def addNodeEvent(self, event):
         if self.addNode == True:
             widget = Node(event.pos().x(), event.pos().y(), self.curId, self.connectNodes)  # Create an instance of MyWidget
