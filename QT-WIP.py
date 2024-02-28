@@ -1,7 +1,7 @@
 import sys
 from typing import Iterable
-from PyQt6.QtWidgets import QGraphicsScene, QGraphicsSceneDragDropEvent, QGraphicsSceneHoverEvent, QGraphicsSceneMouseEvent, QGraphicsView, QGraphicsItem, QGraphicsRectItem, QGraphicsEllipseItem, QApplication, QPushButton
-from PyQt6.QtGui import QBrush, QDragEnterEvent, QMouseEvent, QPen, QColor, QDrag
+from PyQt6.QtWidgets import QGraphicsScene, QGraphicsSceneDragDropEvent, QGraphicsSceneHoverEvent, QGraphicsSceneMouseEvent, QGraphicsView, QGraphicsItem, QGraphicsRectItem, QGraphicsEllipseItem, QApplication, QPushButton, QGraphicsPathItem
+from PyQt6.QtGui import QBrush, QDragEnterEvent, QMouseEvent, QPen, QColor, QDrag, QPainterPath
 from PyQt6.QtCore import QRectF, Qt, QEvent, QObject, QLineF, QMimeData
 
 app = QApplication(sys.argv)
@@ -9,7 +9,9 @@ app = QApplication(sys.argv)
 # Defining a scene rect of 400x200, with it's origin at 0,0.
 # If we don't set this on creation, we can set it later with .setSceneRect
 class Node(QGraphicsEllipseItem):
-    def __init__(self, x, y, curId, edgeFunction):
+    def __init__(self, parent, x, y, curId, edgeFunction):
+        self.parent = parent
+
         self.d = 70
         self.r = self.d/2
         self.id = curId
@@ -34,8 +36,31 @@ class Node(QGraphicsEllipseItem):
 
     def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         print("Release")
+        self.parent.updateEdges()
         return super().mouseReleaseEvent(event)
 
+
+class Edge(QGraphicsPathItem):
+    def __init__(self, source, sink):
+        self.sourceNode = source
+        self.sinkNode = sink
+
+        super().__init__()
+        self.path = QPainterPath()
+
+        rect = QRectF(self.sourceNode.pos(), self.sinkNode.pos() )
+        self.path.addRect(rect)
+
+        self.setPath(self.path)
+
+    def update(self):
+        print(self)
+
+        self.path.clear()
+        rect = QRectF(self.sourceNode.pos(), self.sinkNode.pos() )
+        self.path.addRect(rect)
+
+        self.setPath(self.path)
 
 class AGraphicsView(QGraphicsView):
     def __init__(self, scene: QGraphicsScene):
@@ -53,10 +78,11 @@ class AGraphicsView(QGraphicsView):
 
         self.curId = 0
         self.nodeIds = []
-        self.listOfEdges = []
+        self.dictOfEdges = {}
+        self.dictOfEdgeItems = {}
         self.edgeBuf = []
 
-    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         if self.addNode == True:
                 self.addNodeEvent(event)
 
@@ -64,7 +90,7 @@ class AGraphicsView(QGraphicsView):
     
     def addNodeEvent(self, event):
         if self.addNode == True:
-            widget = Node(event.pos().x(), event.pos().y(), self.curId, self.connectNodes)  # Create an instance of MyWidget
+            widget = Node(self, event.pos().x(), event.pos().y(), self.curId, self.connectNodes)  # Create an instance of MyWidget
             self.curId+=1
 
             self.scene.addItem(widget)
@@ -85,19 +111,25 @@ class AGraphicsView(QGraphicsView):
                 return
             self.edgeBuf.append([id, obj])
             linkStr = f"{self.edgeBuf[0][0]}->{id}"
-            if linkStr not in self.listOfEdges:
+            if linkStr not in self.dictOfEdges:
                 print(self.edgeBuf)
                 obj1 = self.edgeBuf[0][1]
-                nLine = QLineF(obj1.pos(), obj.pos())
-                pen = QPen(Qt.GlobalColor.blue, 5, Qt.PenStyle.SolidLine)
-                self.scene.addLine(nLine, pen)
+                
+                edge = Edge(obj1, obj) 
+                self.dictOfEdges[linkStr] = edge
+                self.scene.addItem(edge)
 
-                self.listOfEdges.append(linkStr)
             self.edgeBuf = []
         else:
             self.edgeBuf.append([id, obj])
-            
+
+    def updateEdges(self):
         
+        for e in self.dictOfEdges:
+            #self.scene.removeItem(self.dictOfEdgeItems[e])
+            self.dictOfEdges[e].update()
+
+
 scene = QGraphicsScene(0, 0, 800, 600)
 # scene = AGraphicsScene()
 
