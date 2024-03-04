@@ -4,7 +4,6 @@ from PyQt6.QtWidgets import QGraphicsScene, QGraphicsSceneDragDropEvent, QGraphi
 from PyQt6.QtGui import QBrush, QDragEnterEvent, QMouseEvent, QPen, QColor, QDrag, QPainterPath
 from PyQt6.QtCore import QRectF, Qt, QEvent, QObject, QLineF, QMimeData
 
-app = QApplication(sys.argv)
 
 # Defining a scene rect of 400x200, with it's origin at 0,0.
 # If we don't set this on creation, we can set it later with .setSceneRect
@@ -46,21 +45,36 @@ class Edge(QGraphicsPathItem):
         self.sinkNode = sink
 
         super().__init__()
-        self.path = QPainterPath()
 
-        rect = QRectF(self.sourceNode.pos(), self.sinkNode.pos() )
-        self.path.addRect(rect)
+        brush = QBrush(QColor(255, 255, 255, 255) ) # White brush
+        self.setBrush(brush)
+
+        self.path = QPainterPath()
+       
+        self.draw_edge()
 
         self.setPath(self.path)
+
 
     def update(self):
         print(self)
 
         self.path.clear()
-        rect = QRectF(self.sourceNode.pos(), self.sinkNode.pos() )
-        self.path.addRect(rect)
+
+        self.draw_edge()
 
         self.setPath(self.path)
+
+    def draw_edge(self):
+
+        self.path.moveTo(self.sourceNode.pos().x() + 3, self.sourceNode.pos().y() + 3 )
+
+        self.path.quadTo(self.sinkNode.pos().x() +3, self.sinkNode.pos().y() + 3, self.sinkNode.pos().x() + 3, self.sinkNode.pos().y() + 3 )
+        self.path.quadTo(self.sinkNode.pos().x() -  3, self.sinkNode.pos().y() - 3, self.sinkNode.pos().x() - 3, self.sinkNode.pos().y() - 3 )
+        self.path.quadTo(self.sourceNode.pos().x() - 3, self.sourceNode.pos().y() - 3, self.sourceNode.pos().x() - 3, self.sourceNode.pos().y() - 3 )
+        self.path.quadTo(self.sourceNode.pos().x() + 3, self.sourceNode.pos().y() + 3, self.sourceNode.pos().x() + 3, self.sourceNode.pos().y() + 3)
+
+
 
 class AGraphicsView(QGraphicsView):
     def __init__(self, scene: QGraphicsScene):
@@ -130,9 +144,12 @@ class AGraphicsView(QGraphicsView):
             self.dictOfEdges[e].update()
 
 
-scene = QGraphicsScene(0, 0, 800, 600)
-# scene = AGraphicsScene()
+if __name__ == "__main__":
 
-view = AGraphicsView(scene)
-view.show()
-app.exec()
+    app = QApplication(sys.argv)
+    scene = QGraphicsScene(0, 0, 800, 600)
+    # scene = AGraphicsScene()
+
+    view = AGraphicsView(scene)
+    view.show()
+    app.exec()
