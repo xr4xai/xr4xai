@@ -1,14 +1,14 @@
 import sys
 from typing import Iterable
 from PyQt6.QtWidgets import QGraphicsScene, QGraphicsSceneDragDropEvent, QGraphicsSceneHoverEvent, QGraphicsSceneMouseEvent, QGraphicsView, QGraphicsItem, QGraphicsRectItem, QGraphicsEllipseItem, QApplication, QPushButton, QGraphicsPathItem
-from PyQt6.QtGui import QBrush, QDragEnterEvent, QMouseEvent, QPen, QColor, QDrag, QPainterPath
+from PyQt6.QtGui import QBrush, QDragEnterEvent, QMouseEvent, QPen, QColor, QDrag, QPainterPath, QGradient, QRadialGradient, QLinearGradient
 from PyQt6.QtCore import QRectF, Qt, QEvent, QObject, QLineF, QMimeData
 
 
 # Defining a scene rect of 400x200, with it's origin at 0,0.
 # If we don't set this on creation, we can set it later with .setSceneRect
 class Node(QGraphicsEllipseItem):
-    def __init__(self, parent, x, y, curId, edgeFunction):
+    def __init__(self, parent, x, y, curId, nodeType, edgeFunction):
         self.parent = parent
 
         self.d = 70
@@ -17,8 +17,14 @@ class Node(QGraphicsEllipseItem):
         super().__init__(0-self.r, 0-self.r, self.d, self.d)  # Initialize QPushButton with text "Click Me!"
         self.setPos(x, y)
         self.setZValue(10)
+        
+        self.nodeType = nodeType
+
         self.addEdgeFunc = edgeFunction
-        brush = QBrush(QColor("red"))
+            
+
+        self.makeGradient()
+        brush = QBrush(self.gradient)
         # self.setFocusP(Qt.FocusPolicy.ClickFocus)
         self.setBrush(brush)
         self._new = True
@@ -37,6 +43,23 @@ class Node(QGraphicsEllipseItem):
         print("Release")
         self.parent.updateEdges()
         return super().mouseReleaseEvent(event)
+
+    def makeGradient(self):
+        self.gradient = QRadialGradient(self.pos().x(), self.pos().y(), self.r, self.pos().x() + self.r /2 , self.pos().y() + self.r /2)
+
+        #self.gradient.setSpread(QGradient.Spread.ReflectSpread)
+
+        if(self.nodeType == "input"): # Tennessee orange
+            self.gradient.setColorAt(0, QColor(255, 255, 255, 255 ) ) 
+            self.gradient.setColorAt(1, QColor(255, 130, 0, 255 ) )
+ 
+        if(self.nodeType == "hidden"): # gray
+            self.gradient.setColorAt(0, QColor(150, 150, 150, 255 ) ) 
+            self.gradient.setColorAt(1, QColor(75, 75, 75, 255 ) )
+            
+        if(self.nodeType == "output"): # Pat Summit blue
+            self.gradient.setColorAt(0, QColor(255, 255, 255, 255 ) ) 
+            self.gradient.setColorAt(1, QColor(72, 159, 233, 255 ) )       
 
 
 class Edge(QGraphicsPathItem):
@@ -104,7 +127,7 @@ class AGraphicsView(QGraphicsView):
     
     def addNodeEvent(self, event):
         if self.addNode == True:
-            widget = Node(self, event.pos().x(), event.pos().y(), self.curId, self.connectNodes)  # Create an instance of MyWidget
+            widget = Node(self, event.pos().x(), event.pos().y(), self.curId, "input", self.connectNodes)  # Create an instance of MyWidget
             self.curId+=1
 
             self.scene.addItem(widget)
