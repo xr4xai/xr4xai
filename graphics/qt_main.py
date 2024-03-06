@@ -157,8 +157,8 @@ class Edge(QGraphicsPathItem):
             offy = (self.sinkNode.pos().y() - self.sourceNode.pos().y() )
             offy /= math.sqrt((self.sinkNode.pos().y() - self.sourceNode.pos().y() ) ** 2 + (self.sinkNode.pos().x() - self.sourceNode.pos().x()) ** 2)
             offy *= self.sourceNode.r
-            cx = offx + self.sourceNode.pos().x() + distance_along_edge * ( self.sinkNode.pos().x() - self.sourceNode.pos().x() )
-            cy = offy + self.sourceNode.pos().y() + distance_along_edge * ( self.sinkNode.pos().y() - self.sourceNode.pos().y() )
+            cx = offx + self.sourceNode.pos().x() + distance_along_edge * ( self.sinkNode.pos().x() - self.sourceNode.pos().x() - offx )
+            cy = offy + self.sourceNode.pos().y() + distance_along_edge * ( self.sinkNode.pos().y() - self.sourceNode.pos().y() - offy )
 
             print(f"{self.sourceNode.id}->{self.sinkNode.id} is drawing a spike at {cx} {cy}. dist_along = {distance_along_edge}")
 
