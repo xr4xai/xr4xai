@@ -54,6 +54,7 @@ class Node(QGraphicsEllipseItem):
 
         self.addEdgeFunc = edgeFunction
             
+        self.setToolTip(f"Node ID: {self.id}\nNode Type: {self.nodeType}")
 
         self.makeGradient()
         brush = QBrush(self.gradient)

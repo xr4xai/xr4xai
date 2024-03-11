@@ -61,6 +61,8 @@ class Edge(QGraphicsPathItem):
 
         super().__init__()
 
+        self.setToolTip(f"Source ID: {self.sourceNode.id}\nSink ID: {self.sinkNode.id}\nWeight: {self.weight}\nDelay: {self.delay}\nSpike Vec: {self.spike_vec}")
+
         brush = QBrush(QColor(255, 255, 255, 255) ) # White brush
         self.setBrush(brush)
 
