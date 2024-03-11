@@ -59,9 +59,12 @@ class AGraphicsView(QGraphicsView):
         super().__init__(scene)
         self.scene = scene
 
-        self.fitInView(0, 50, 800, 750)
+    
         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
+        self.centerOn(400,300)
 
+
+        self.visual_time = -1
 
         # Add Node Button
         button = QPushButton("Add Node")
@@ -179,7 +182,7 @@ class Layout(QWidget):
         
         vbox = QVBoxLayout(self)
       
-        scene = QGraphicsScene(0, 0, 800, 600)
+        scene = QGraphicsScene(-1500, -1500, 3000, 3000)
         view = AGraphicsView(scene)
         
         # Add Slider for time
