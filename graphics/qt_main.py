@@ -79,10 +79,13 @@ class AGraphicsView(QGraphicsView):
         self.curId = 0
         self.nodeIds = []
         self.dictOfEdges = {}
+        self.dictOfNodes = {}
         self.edgeBuf = []
     
         self.createTestNetwork()
         self.spike_vec = test_network.test_net_spike_vec()
+        self.updateEdges()
+        self.updateNodes()
 
 
     # This creates the test network. It will be usurped by code that
@@ -92,6 +95,9 @@ class AGraphicsView(QGraphicsView):
         n2 = Node(self, 400, 150, 1, "output", self.connectNodes)
         n3 = Node(self, 400, 300, 2, "output", self.connectNodes)
         n4 = Node(self, 400, 450, 3, "output", self.connectNodes)
+        self.dictOfNodes[0] = n1; self.dictOfNodes[1] = n2;
+        self.dictOfNodes[2] = n3; self.dictOfNodes[3] = n4;
+        self.curId = 4
 
         self.scene.addItem(n1); self.scene.addItem(n2);
         self.scene.addItem(n3); self.scene.addItem(n4);
@@ -110,6 +116,7 @@ class AGraphicsView(QGraphicsView):
         print(self.visual_time)
 
         self.updateEdges()
+        self.updateNodes()
 
     # Does whatever mouse click event we want to do
     def mousePressEvent(self, event: QMouseEvent) -> None:
@@ -127,10 +134,11 @@ class AGraphicsView(QGraphicsView):
     # Creates a node at user click positon 
     def addNodeEvent(self, event):
         if self.addNode == True:
-            widget = Node(self, event.pos().x(), event.pos().y(), self.curId, "input", self.connectNodes)  # Create an instance of MyWidget
+            node = Node(self, event.pos().x(), event.pos().y(), self.curId, "input", self.connectNodes)  # Create an instance of MyWidget
+            self.dictOfNodes[self.curId] = node
             self.curId+=1
 
-            self.scene.addItem(widget)
+            self.scene.addItem(node)
             self.addNode = False
 
     # If the buttons pressed, set a flag so the next click creates a node
@@ -161,13 +169,25 @@ class AGraphicsView(QGraphicsView):
         else:
             self.edgeBuf.append([id, obj])
 
+    def updateNodes(self):
+
+        for n in self.dictOfNodes:
+
+            if(n < len(self.spike_vec)):
+                self.dictOfNodes[n].spike_vec = self.spike_vec[ n ]
+            self.dictOfNodes[n].visual_time = self.visual_time
+
+            self.dictOfNodes[n].update()
+
+
 
     # Goes through all edges and tells them to update
     def updateEdges(self):
 
         for e in self.dictOfEdges:
             
-            self.dictOfEdges[e].spike_vec = self.spike_vec[ self.dictOfEdges[e].sourceNode.id ]
+            if(self.dictOfEdges[e].sourceNode.id < len(self.spike_vec)):
+                self.dictOfEdges[e].spike_vec = self.spike_vec[ self.dictOfEdges[e].sourceNode.id ]
             self.dictOfEdges[e].visual_time = self.visual_time
 
 

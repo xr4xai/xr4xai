@@ -51,10 +51,11 @@ class Node(QGraphicsEllipseItem):
         self.setZValue(10)
         
         self.nodeType = nodeType
+        self.spike_vec = []
 
         self.addEdgeFunc = edgeFunction
             
-        self.setToolTip(f"Node ID: {self.id}\nNode Type: {self.nodeType}")
+        self.setToolTip(f"Node ID: {self.id}\nNode Type: {self.nodeType}\nSpike Vec: {self.spike_vec}")
 
         self.makeGradient()
         brush = QBrush(self.gradient)
@@ -101,3 +102,5 @@ class Node(QGraphicsEllipseItem):
             self.gradient.setColorAt(0, QColor(255, 255, 255, 255 ) ) 
             self.gradient.setColorAt(1, QColor(72, 159, 233, 255 ) )       
 
+    def update(self):
+        self.setToolTip(f"Node ID: {self.id}\nNode Type: {self.nodeType}\nSpike Vec: {self.spike_vec}")

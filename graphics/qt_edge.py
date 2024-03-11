@@ -55,14 +55,14 @@ class Edge(QGraphicsPathItem):
         # This is the data needed to draw spikes along the edges
         # It will be updated by the parent GraphicsView when it calls updateEdges
         # We may want to considerr different ways of updating this.
-        self.spike_vec = []
+        self.spike_vec = self.sourceNode.spike_vec
         self.visual_time = -1
 
 
         super().__init__()
 
         self.setToolTip(f"Source ID: {self.sourceNode.id}\nSink ID: {self.sinkNode.id}\nWeight: {self.weight}\nDelay: {self.delay}\nSpike Vec: {self.spike_vec}")
-
+        
         brush = QBrush(QColor(255, 255, 255, 255) ) # White brush
         self.setBrush(brush)
 
@@ -75,6 +75,9 @@ class Edge(QGraphicsPathItem):
     # Update is called whenever the GraphicsView updates the edge
     # All it does is clear the path and then redraw it and readd it
     def update(self):
+
+        self.setToolTip(f"Source ID: {self.sourceNode.id}\nSink ID: {self.sinkNode.id}\nWeight: {self.weight}\nDelay: {self.delay}\nSpike Vec: {self.spike_vec}")
+
         self.path.clear()
 
         self.draw_edge()
