@@ -20,6 +20,8 @@ from PyQt6.QtWidgets import (
     QPushButton, 
     QGraphicsPathItem,
     QSlider,
+    QWidget,
+    QVBoxLayout
     )
 from PyQt6.QtGui import (
     QBrush, 
@@ -56,7 +58,11 @@ class AGraphicsView(QGraphicsView):
     def __init__(self, scene: QGraphicsScene):
         super().__init__(scene)
         self.scene = scene
-        
+
+        self.fitInView(0, 50, 800, 750)
+        self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
+
+
         # Add Node Button
         button = QPushButton("Add Node")
         button.resize(750, 75)
@@ -66,17 +72,6 @@ class AGraphicsView(QGraphicsView):
         self.addNode = False
 
         self.scene.addWidget(button)
-
-        # Add Slider for time
-        time_slider = QSlider(Qt.Orientation.Horizontal, self)
-        time_slider.setRange(0, 100)
-        visual_time = 0
-        time_slider.setValue(0)
-        time_slider.move(25, 25)
-
-        time_slider.valueChanged.connect(self.updateSimTimeFromSlider)
-        
-        self.scene.addWidget(time_slider)
 
         self.curId = 0
         self.nodeIds = []
@@ -115,6 +110,12 @@ class AGraphicsView(QGraphicsView):
 
     # Does whatever mouse click event we want to do
     def mousePressEvent(self, event: QMouseEvent) -> None:
+        
+
+        item = self.itemAt(event.pos()) 
+        print("You clicked on item", item)
+
+
         if self.addNode == True:
                 self.addNodeEvent(event)
 
@@ -170,13 +171,38 @@ class AGraphicsView(QGraphicsView):
             self.dictOfEdges[e].update()
 
 
+class Layout(QWidget):
+
+    def __init__(self):
+        super().__init__()
+
+        
+        vbox = QVBoxLayout(self)
+      
+        scene = QGraphicsScene(0, 0, 800, 600)
+        view = AGraphicsView(scene)
+        
+        # Add Slider for time
+        time_slider = QSlider(Qt.Orientation.Horizontal, self)
+        time_slider.setRange(0, 100)
+        self.visual_time = 0
+        time_slider.setValue(0)
+        time_slider.move(25, 25)
+
+        time_slider.valueChanged.connect(view.updateSimTimeFromSlider)
+        
+        vbox.addWidget(time_slider)
+        vbox.addWidget(view)
+
+        self.setLayout(vbox)
+
+
 # Main creates an app with a scence that has a view that is our graphics view.
 if __name__ == "__main__":
 
     app = QApplication(sys.argv)
-    scene = QGraphicsScene(0, 0, 800, 600)
-    # scene = AGraphicsScene()
 
-    view = AGraphicsView(scene)
-    view.show()
+    layout = Layout()
+    layout.show()
+    
     app.exec()
