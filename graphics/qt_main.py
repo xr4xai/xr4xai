@@ -153,8 +153,12 @@ class AGraphicsView(QGraphicsView):
         menu = QMenu(self)
 
         menu.addAction(self.addEdgeAction)
-        menu.addAction(self.editNodeTypeAction)
-
+        
+        nodeTypeMenu = menu.addMenu("Edit Node Type")
+        nodeTypeMenu.addAction(self.editNodeTypeInputAction)
+        nodeTypeMenu.addAction(self.editNodeTypeHiddenAction)
+        nodeTypeMenu.addAction(self.editNodeTypeOutputAction)
+        
         menu.exec(event.globalPosition().toPoint() )
         
         
@@ -235,13 +239,24 @@ class AGraphicsView(QGraphicsView):
         self.addEdgeAction.setText("Create Edge")
         self.addEdgeAction.triggered.connect(lambda: self.connectNodes(self.itemAt(self.mostRecentEvent.pos() )) ) 
 
-        self.editNodeTypeAction = QAction(self)
-        self.editNodeTypeAction.setText("Edit Node Type")
-        self.editNodeTypeAction.triggered.connect(lambda: self.editNodeType(self.itemAt(self.mostRecentEvent.pos() )) ) 
-    
-    def editNodeType(self, node):
+        self.editNodeTypeInputAction = QAction(self)
+        self.editNodeTypeInputAction.setText("Input")
+        self.editNodeTypeInputAction.triggered.connect(lambda: self.editNodeType(self.itemAt(self.mostRecentEvent.pos()), "input" ) )
+
+
+        self.editNodeTypeHiddenAction = QAction(self)
+        self.editNodeTypeHiddenAction.setText("Hidden")
+        self.editNodeTypeHiddenAction.triggered.connect(lambda: self.editNodeType(self.itemAt(self.mostRecentEvent.pos()), "hidden" ) ) 
         
-        return
+        self.editNodeTypeOutputAction = QAction(self)
+        self.editNodeTypeOutputAction.setText("Output")
+        self.editNodeTypeOutputAction.triggered.connect(lambda: self.editNodeType(self.itemAt(self.mostRecentEvent.pos()), "output" ) ) 
+    
+    def editNodeType(self, node, newtype):
+        
+        node.nodeType = newtype
+        node.update()
+
 
 class Layout(QWidget):
 

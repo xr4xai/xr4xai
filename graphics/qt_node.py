@@ -98,4 +98,6 @@ class Node(QGraphicsEllipseItem):
             self.gradient.setColorAt(1, QColor(72, 159, 233, 255 ) )       
 
     def update(self):
+        self.makeGradient()
+        self.setBrush( QBrush(self.gradient) )
         self.setToolTip(f"Node ID: {self.id}\nNode Type: {self.nodeType}\nSpike Vec: {self.spike_vec}")
