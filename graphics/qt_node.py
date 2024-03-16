@@ -40,7 +40,7 @@ from PyQt6.QtCore import (
 
 
 class Node(QGraphicsEllipseItem):
-    def __init__(self, parent, x, y, curId, nodeType, edgeFunction):
+    def __init__(self, parent, x, y, curId, nodeType):
         self.parent = parent
 
         self.d = 70
@@ -52,8 +52,6 @@ class Node(QGraphicsEllipseItem):
         
         self.nodeType = nodeType
         self.spike_vec = []
-
-        self.addEdgeFunc = edgeFunction
             
         self.setToolTip(f"Node ID: {self.id}\nNode Type: {self.nodeType}\nSpike Vec: {self.spike_vec}")
 
@@ -61,25 +59,22 @@ class Node(QGraphicsEllipseItem):
         brush = QBrush(self.gradient)
         # self.setFocusP(Qt.FocusPolicy.ClickFocus)
         self.setBrush(brush)
-        self._new = True
 
         self.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsMovable | QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
         self.setAcceptDrops(True)
 
-
     # If mouse if pressed a second time, it will currently create an edge
     # We should remove that and probably move creating edges to a right click function
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
-        if not self._new:
-            self.addEdgeFunc(self, self.id)
-        else:
-            self._new = False
+        self.parent.updateEdges()
         return super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         print("Release")
         self.parent.updateEdges()
         return super().mouseReleaseEvent(event)
+
+
 
     # This function will create the Gradient Brush that will be used to paint the node
     def makeGradient(self):

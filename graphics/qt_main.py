@@ -70,18 +70,6 @@ class AGraphicsView(QGraphicsView):
 
         self.visual_time = -1
 
-        """
-        # Add Node Button
-        button = QPushButton("Add Node")
-        button.resize(750, 75)
-        button.move(25, 500)
-        button.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
-        button.pressed.connect(self.addNodePressed)
-        self.addNode = False
-
-        self.scene.addWidget(button)
-        """
-
         self.curId = 0
         self.nodeIds = []
         self.dictOfEdges = {}
@@ -97,10 +85,10 @@ class AGraphicsView(QGraphicsView):
     # This creates the test network. It will be usurped by code that
     # creates networks from abitrary files/neuro instances
     def createTestNetwork(self):
-        n1 = Node(self, 100, 300, 0, "input", self.connectNodes)
-        n2 = Node(self, 400, 150, 1, "output", self.connectNodes)
-        n3 = Node(self, 400, 300, 2, "output", self.connectNodes)
-        n4 = Node(self, 400, 450, 3, "output", self.connectNodes)
+        n1 = Node(self, 100, 300, 0, "input")
+        n2 = Node(self, 400, 150, 1, "output")
+        n3 = Node(self, 400, 300, 2, "output")
+        n4 = Node(self, 400, 450, 3, "output")
         self.dictOfNodes[0] = n1; self.dictOfNodes[1] = n2;
         self.dictOfNodes[2] = n3; self.dictOfNodes[3] = n4;
         self.curId = 4
@@ -109,9 +97,9 @@ class AGraphicsView(QGraphicsView):
         self.scene.addItem(n3); self.scene.addItem(n4);
     
         # We have to write some new methods for this
-        self.connectNodes(n1, 0); self.connectNodes(n2, 1);
-        self.connectNodes(n1, 0); self.connectNodes(n3, 2);
-        self.connectNodes(n1, 0); self.connectNodes(n4, 3);
+        self.connectNodes(n1); self.connectNodes(n2);
+        self.connectNodes(n1); self.connectNodes(n3);
+        self.connectNodes(n1); self.connectNodes(n4);
             
         self.dictOfEdges["0->2"].delay = 3
 
@@ -140,7 +128,14 @@ class AGraphicsView(QGraphicsView):
             if(event.button() == Qt.MouseButton.RightButton):
                 self.rightClickBackground(event)
 
-    
+        elif(type(item) is Node):
+
+            if(event.button() == Qt.MouseButton.RightButton):
+                self.rightClickNode(event)
+
+            elif(event.button() == Qt.MouseButton.LeftButton and len(self.edgeBuf) != 0):
+                self.connectNodes(item)
+
 
         return super().mousePressEvent(event)
 
@@ -153,11 +148,20 @@ class AGraphicsView(QGraphicsView):
         # Gotta love how to change everything for no reason in new Qt versions
         menu.exec(event.globalPosition().toPoint() )
 
+    def rightClickNode(self, event):
 
+        menu = QMenu(self)
+
+        menu.addAction(self.addEdgeAction)
+        menu.addAction(self.editNodeTypeAction)
+
+        menu.exec(event.globalPosition().toPoint() )
+        
+        
 
     # Creates a node at user click positon 
     def addNodeEvent(self):
-        node = Node(self, self.mostRecentEvent.pos().x(), self.mostRecentEvent.pos().y(), self.curId, "input", self.connectNodes)  # Create an instance of MyWidget
+        node = Node(self, self.mostRecentEvent.pos().x(), self.mostRecentEvent.pos().y(), self.curId, "input")
         self.dictOfNodes[self.curId] = node
         self.curId+=1
 
@@ -171,9 +175,14 @@ class AGraphicsView(QGraphicsView):
     # connectNodes is currently passed to the node classes as the function called
     # when the user mouse clicks on them. It maintains a buffer of two nodes
     # such that the first node pressed will connect to the second node.
-    def connectNodes(self, obj, id):
-        # print(pos1.x(), pos1.y(), id)
-        print(f"Clicked on node #{id} at {obj}")
+    def connectNodes(self, obj): 
+       
+        if(type(obj) is not Node):
+            print("Error in connectNodes: obj is type ", type(obj) )
+            return
+
+        id = obj.id
+
         if len(self.edgeBuf) > 0:
             if id == self.edgeBuf[0][0]:
                 return
@@ -221,6 +230,18 @@ class AGraphicsView(QGraphicsView):
         self.addNodeAction = QAction(self)
         self.addNodeAction.setText("Add Node")
         self.addNodeAction.triggered.connect(self.addNodeEvent)
+        
+        self.addEdgeAction = QAction(self)
+        self.addEdgeAction.setText("Create Edge")
+        self.addEdgeAction.triggered.connect(lambda: self.connectNodes(self.itemAt(self.mostRecentEvent.pos() )) ) 
+
+        self.editNodeTypeAction = QAction(self)
+        self.editNodeTypeAction.setText("Edit Node Type")
+        self.editNodeTypeAction.triggered.connect(lambda: self.editNodeType(self.itemAt(self.mostRecentEvent.pos() )) ) 
+    
+    def editNodeType(self, node):
+        
+        return
 
 class Layout(QWidget):
 
