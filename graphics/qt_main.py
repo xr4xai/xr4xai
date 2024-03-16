@@ -1,5 +1,5 @@
 """
-This file implements a Graphics View for the GUI, and the main function that will 
+This file implements a Layout and Graphics View for the GUI, and the main function that will 
 create and run that graphics view. it utilizes qt_node and qt_edge files.
 It also utilizes the snn directory to get infromation from simualted networks. (i.e. make sure your sourced into pyframework)
 """
@@ -21,7 +21,9 @@ from PyQt6.QtWidgets import (
     QGraphicsPathItem,
     QSlider,
     QWidget,
-    QVBoxLayout
+    QVBoxLayout,
+    QMenu,
+
     )
 from PyQt6.QtGui import (
     QBrush, 
@@ -34,6 +36,7 @@ from PyQt6.QtGui import (
     QGradient, 
     QRadialGradient, 
     QLinearGradient,
+    QAction,
     )
 from PyQt6.QtCore import (
     QRectF, 
@@ -63,9 +66,11 @@ class AGraphicsView(QGraphicsView):
         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
         self.centerOn(400,300)
 
+        self.createMenuActions()
 
         self.visual_time = -1
 
+        """
         # Add Node Button
         button = QPushButton("Add Node")
         button.resize(750, 75)
@@ -75,6 +80,7 @@ class AGraphicsView(QGraphicsView):
         self.addNode = False
 
         self.scene.addWidget(button)
+        """
 
         self.curId = 0
         self.nodeIds = []
@@ -118,28 +124,44 @@ class AGraphicsView(QGraphicsView):
         self.updateEdges()
         self.updateNodes()
 
+
     # Does whatever mouse click event we want to do
     def mousePressEvent(self, event: QMouseEvent) -> None:
         
+        # This is a bodge to get event info from any event to be used by other 
+        # class member functions without the need to pass the event to them.
+        # Probably not the most elegant way to do it, but hey.
+        self.mostRecentEvent = event
 
         item = self.itemAt(event.pos()) 
-        print("You clicked on item", item)
 
+        if(item is None):
 
-        if self.addNode == True:
-                self.addNodeEvent(event)
+            if(event.button() == Qt.MouseButton.RightButton):
+                self.rightClickBackground(event)
+
+    
 
         return super().mousePressEvent(event)
-    
-    # Creates a node at user click positon 
-    def addNodeEvent(self, event):
-        if self.addNode == True:
-            node = Node(self, event.pos().x(), event.pos().y(), self.curId, "input", self.connectNodes)  # Create an instance of MyWidget
-            self.dictOfNodes[self.curId] = node
-            self.curId+=1
 
-            self.scene.addItem(node)
-            self.addNode = False
+    def rightClickBackground(self, event):
+
+        menu = QMenu(self)
+
+        menu.addAction(self.addNodeAction)
+
+        # Gotta love how to change everything for no reason in new Qt versions
+        menu.exec(event.globalPosition().toPoint() )
+
+
+
+    # Creates a node at user click positon 
+    def addNodeEvent(self):
+        node = Node(self, self.mostRecentEvent.pos().x(), self.mostRecentEvent.pos().y(), self.curId, "input", self.connectNodes)  # Create an instance of MyWidget
+        self.dictOfNodes[self.curId] = node
+        self.curId+=1
+
+        self.scene.addItem(node)
 
     # If the buttons pressed, set a flag so the next click creates a node
     def addNodePressed(self):
@@ -193,6 +215,12 @@ class AGraphicsView(QGraphicsView):
 
             self.dictOfEdges[e].update()
 
+    # Creates all the actions (and connects them to appropriate functions)
+    # for anything and everything that might be used in a menu
+    def createMenuActions(self):
+        self.addNodeAction = QAction(self)
+        self.addNodeAction.setText("Add Node")
+        self.addNodeAction.triggered.connect(self.addNodeEvent)
 
 class Layout(QWidget):
 
