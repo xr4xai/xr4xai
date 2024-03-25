@@ -52,7 +52,9 @@ class Node(QGraphicsEllipseItem):
         
         self.nodeType = nodeType
         self.spike_vec = []
-            
+        self.input_spikes = []
+        self.threshold = 1
+
         self.setToolTip(f"Node ID: {self.id}\nNode Type: {self.nodeType}\nSpike Vec: {self.spike_vec}")
 
         self.makeGradient()

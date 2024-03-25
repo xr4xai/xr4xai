@@ -51,6 +51,8 @@ from PyQt6.QtCore import (
 import os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/../snn" )
 import test_network
+import get_vecs
+
 import math
 
 from qt_node import Node
@@ -78,6 +80,7 @@ class AGraphicsView(QGraphicsView):
     
         self.createTestNetwork()
         self.spike_vec = test_network.test_net_spike_vec()
+        
         self.updateEdges()
         self.updateNodes()
 
@@ -86,6 +89,7 @@ class AGraphicsView(QGraphicsView):
     # creates networks from abitrary files/neuro instances
     def createTestNetwork(self):
         n1 = Node(self, 100, 300, 0, "input")
+        n1.input_spikes = [1, 2, 3]
         n2 = Node(self, 400, 150, 1, "output")
         n3 = Node(self, 400, 300, 2, "output")
         n4 = Node(self, 400, 450, 3, "output")
@@ -171,6 +175,8 @@ class AGraphicsView(QGraphicsView):
 
         self.scene.addItem(node)
 
+        self.updateVecs()
+
     # If the buttons pressed, set a flag so the next click creates a node
     def addNodePressed(self):
         print("Add node pressed!")
@@ -203,6 +209,14 @@ class AGraphicsView(QGraphicsView):
             self.edgeBuf = []
         else:
             self.edgeBuf.append([id, obj])
+
+        self.updateVecs()
+
+    def updateVecs(self):
+        self.spike_vec = get_vecs.get_vecs_from_dicts(self.dictOfNodes, self.dictOfEdges)
+
+        self.updateNodes();
+        self.updateEdges();
 
     def updateNodes(self):
 
