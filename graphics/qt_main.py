@@ -23,7 +23,9 @@ from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QMenu,
-
+    QLineEdit,
+    QFormLayout,
+    QInputDialog,
     )
 from PyQt6.QtGui import (
     QBrush, 
@@ -51,9 +53,10 @@ from PyQt6.QtCore import (
 import os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/../snn" )
 import test_network
-import get_vecs
+import network_communication
 
 import math
+import json
 
 from qt_node import Node
 from qt_edge import Edge
@@ -154,6 +157,8 @@ class AGraphicsView(QGraphicsView):
 
     def rightClickNode(self, event):
 
+        node = self.itemAt(event.pos() ) 
+
         menu = QMenu(self)
 
         menu.addAction(self.addEdgeAction)
@@ -163,13 +168,17 @@ class AGraphicsView(QGraphicsView):
         nodeTypeMenu.addAction(self.editNodeTypeHiddenAction)
         nodeTypeMenu.addAction(self.editNodeTypeOutputAction)
         
+        if(node.nodeType == "input"):
+            menu.addAction(self.editNodeInputSpikesAction) 
+
+        
         menu.exec(event.globalPosition().toPoint() )
         
         
 
     # Creates a node at user click positon 
     def addNodeEvent(self):
-        node = Node(self, self.mostRecentEvent.pos().x(), self.mostRecentEvent.pos().y(), self.curId, "input")
+        node = Node(self, self.mostRecentEvent.pos().x(), self.mostRecentEvent.pos().y(), self.curId, "hidden")
         self.dictOfNodes[self.curId] = node
         self.curId+=1
 
@@ -213,7 +222,7 @@ class AGraphicsView(QGraphicsView):
         self.updateVecs()
 
     def updateVecs(self):
-        self.spike_vec = get_vecs.get_vecs_from_dicts(self.dictOfNodes, self.dictOfEdges)
+        self.spike_vec = network_communication.get_vecs_from_dicts(self.dictOfNodes, self.dictOfEdges)
 
         self.updateNodes();
         self.updateEdges();
@@ -266,10 +275,92 @@ class AGraphicsView(QGraphicsView):
         self.editNodeTypeOutputAction.setText("Output")
         self.editNodeTypeOutputAction.triggered.connect(lambda: self.editNodeType(self.itemAt(self.mostRecentEvent.pos()), "output" ) ) 
     
-    def editNodeType(self, node, newtype):
+        self.editNodeInputSpikesAction = QAction(self)
+        self.editNodeInputSpikesAction.setText("Edit Input Spikes")
+        self.editNodeInputSpikesAction.triggered.connect(lambda: self.editInputSpikes(self.itemAt(self.mostRecentEvent.pos()) ) ) 
+    
+
         
+
+    def editNodeType(self, node, newtype):
+
         node.nodeType = newtype
-        node.update()
+
+        self.reorderNodeIds()
+        self.updateVecs()
+
+    def editInputSpikes(self, node):
+
+        input_string = "["
+        for i in node.input_spikes:
+            input_string += " " + str(i) + " , "
+
+        input_string += "]"
+
+        text, ok = QInputDialog.getText(self, "Input Spike Editor", "Edit Input Spikes:", QLineEdit.EchoMode.Normal, input_string )
+        
+        if ok and text:
+            input_spikes = []
+            for x in text.split(',') :
+                try:
+                    input_spikes.append( int(x.lstrip('[').rstrip(']').strip()) )
+                except ValueError:
+                    print(x + " in input not castable to int.")
+
+            node.input_spikes = input_spikes
+
+            self.updateVecs()
+        
+    """
+    Okay, so the neuroprocessor demands that input node ids come before output/hidden node ids.
+    I don't particullary like this, but what do I know.
+    In any case, we have to make sure the node IDs are in the correct order, so this function does that any time a node type is changed 
+    """
+    def reorderNodeIds(self):
+        
+        input_nodes = []
+        hidden_nodes = []
+        output_nodes = []
+        
+        newNodeDict = {}
+        newEdgeDict = {}
+            
+        # This is a dict of the new ids keyed on the old ones
+        oldToNewDict = {}
+
+        for n in self.dictOfNodes.values():
+            if(n.nodeType == "input"):
+                input_nodes.append(n)
+            elif(n.nodeType == "hidden"):
+                hidden_nodes.append(n)
+            else:
+                output_nodes.append(n)
+
+        for i in range(len(input_nodes)):
+            oldToNewDict[input_nodes[i].id] = i
+            input_nodes[i].id = i
+            newNodeDict[i] = input_nodes[i]
+    
+        for i in range(len(hidden_nodes)):
+            oldToNewDict[hidden_nodes[i].id] = i + len(input_nodes)
+            hidden_nodes[i].id = i + len(input_nodes)
+            newNodeDict[i + len(input_nodes) ] = hidden_nodes[i]
+
+        for i in range(len(output_nodes)):
+            oldToNewDict[output_nodes[i].id] = i + len(input_nodes) + len(hidden_nodes)
+            output_nodes[i].id = i + len(input_nodes) + len(hidden_nodes)
+            newNodeDict[i + len(hidden_nodes) + len(input_nodes) ] = output_nodes[i]
+
+        for e in self.dictOfEdges.values():
+            key = str(e.sourceNode) + "->" + str(e.sinkNode)
+
+            newEdgeDict[key] = e
+
+        self.dictOfEdges = newEdgeDict
+        self.dictOfNodes = newNodeDict
+
+
+
 
 
 class Layout(QWidget):

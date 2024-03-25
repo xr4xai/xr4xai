@@ -34,12 +34,14 @@ def get_vecs_from_dicts(node_dict, edge_dict):
         node.set("Threshold", n.threshold)
         
         if(n.nodeType == "input"):
+            print(n.id, " is input")
+            
             net.add_input(n.id)
-
+            
             for i in n.input_spikes:
-
                 spikes.append( neuro.Spike(id=n.id, time=i, value=1) )
-    
+                
+
         if(n.nodeType == "output"):
             net.add_output(n.id)
 
@@ -51,9 +53,11 @@ def get_vecs_from_dicts(node_dict, edge_dict):
 
     proc.load_network(net)
     print(net)
+
     for i in range(net.num_nodes()):
         proc.track_neuron_events(i)
 
+    print(spikes)
     proc.apply_spikes(spikes)
 
     proc.run(10)
