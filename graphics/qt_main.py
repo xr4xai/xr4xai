@@ -23,9 +23,12 @@ from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QMenu,
+    QMenuBar,
     QLineEdit,
     QFormLayout,
     QInputDialog,
+    QMainWindow,
+    QLayout,
     )
 from PyQt6.QtGui import (
     QBrush, 
@@ -279,8 +282,30 @@ class AGraphicsView(QGraphicsView):
         self.editNodeInputSpikesAction.setText("Edit Input Spikes")
         self.editNodeInputSpikesAction.triggered.connect(lambda: self.editInputSpikes(self.itemAt(self.mostRecentEvent.pos()) ) ) 
     
+    def saveNetworkToFile(self):
+
+        fn, ok = QInputDialog.getText(self, "Save As", "Save Network to File: ", QLineEdit.EchoMode.Normal, "" )
+        
+        if ok and fn:
+            network_communication.write_to_file(self.dictOfNodes, self.dictOfEdges, fn)
+
+
+    def openNetworkFile(self):
 
         
+        fn, ok = QInputDialog.getText(self, "Open", "File to Open:  ", QLineEdit.EchoMode.Normal, "" )
+        
+        if ok and fn:
+            self.scene.clear()
+
+            self.dictOfNodes, self.dictOfEdges = network_communication.read_from_file(fn, self)
+            
+            for n in self.dictOfNodes.values():
+                self.scene.addItem(n)
+            for e in self.dictOfEdges.values():
+                self.scene.addItem(e)
+
+            self.updateVecs()
 
     def editNodeType(self, node, newtype):
 
@@ -368,11 +393,10 @@ class Layout(QWidget):
     def __init__(self):
         super().__init__()
 
-        
         vbox = QVBoxLayout(self)
       
-        scene = QGraphicsScene(-1500, -1500, 3000, 3000)
-        view = AGraphicsView(scene)
+        self.scene = QGraphicsScene(-1500, -1500, 3000, 3000)
+        self.view = AGraphicsView(self.scene)
         
         # Add Slider for time
         time_slider = QSlider(Qt.Orientation.Horizontal, self)
@@ -381,14 +405,28 @@ class Layout(QWidget):
         time_slider.setValue(0)
         time_slider.move(25, 25)
 
-        time_slider.valueChanged.connect(view.updateSimTimeFromSlider)
-        
+        time_slider.valueChanged.connect(self.view.updateSimTimeFromSlider)
+
         vbox.addWidget(time_slider)
-        vbox.addWidget(view)
+        vbox.addWidget(self.view)
 
+        menuBar = QMenuBar(self)    
+        fileMenu = QMenu("File", self)
+        menuBar.addMenu(fileMenu)
+
+        self.saveAction = QAction("Save As", self.view)
+        self.saveAction.triggered.connect(self.view.saveNetworkToFile)
+        
+        self.openAction = QAction("Open", self.view)
+        self.openAction.triggered.connect(self.view.openNetworkFile)
+
+        fileMenu.addAction(self.saveAction)
+        fileMenu.addAction(self.openAction)
+
+        vbox.setMenuBar(menuBar)
+    
         self.setLayout(vbox)
-
-
+   
 # Main creates an app with a scence that has a view that is our graphics view.
 if __name__ == "__main__":
 
@@ -396,5 +434,5 @@ if __name__ == "__main__":
 
     layout = Layout()
     layout.show()
-    
+
     app.exec()

@@ -54,6 +54,8 @@ class Node(QGraphicsEllipseItem):
         self.spike_vec = []
         self.input_spikes = []
         self.threshold = 1
+        self.title = ""
+        
 
         self.setToolTip(f"Node ID: {self.id}\nNode Type: {self.nodeType}\nSpike Vec: {self.spike_vec}")
 
@@ -103,3 +105,18 @@ class Node(QGraphicsEllipseItem):
         self.makeGradient()
         self.setBrush( QBrush(self.gradient) )
         self.setToolTip(f"Node ID: {self.id}\nNode Type: {self.nodeType}\nSpike Vec: {self.spike_vec}")
+
+
+    def outputNodeAsDict(self):
+
+        d = {}
+
+        d["nodeType"] = self.nodeType
+        d["title"] = self.title
+        d["threshold"] = self.threshold
+        d["input_spikes"] = self.input_spikes
+
+        d["posX"] = self.pos().x()
+        d["posY"] = self.pos().y()
+
+        return d

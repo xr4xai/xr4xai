@@ -7,6 +7,7 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/../graphics" )
 from qt_node import Node
 from qt_edge import Edge
 
+import json
 
 risp_config = {
   "leak_mode": "none",
@@ -66,8 +67,58 @@ def get_vecs_from_dicts(node_dict, edge_dict):
 
     return v
 
+def write_to_file(node_dict, edge_dict, filename):
+
+    with open(filename, "w") as file:
+        
+        out_node_dict = {}
+        out_edge_dict = {}
+
+        for n in node_dict:
+            out_node_dict[n] = node_dict[n].outputNodeAsDict()
+
+        
+        print(out_node_dict)
+
+        for e in edge_dict:
+            out_edge_dict[e] = edge_dict[e].outputEdgeAsDict()
+
+        print(out_edge_dict)
+
+        out = {"nodes":out_node_dict, "edges":out_edge_dict}
+        
+        json.dump(out, file)
+
+def read_from_file(filename, parent):
+
+    print("Opening file ", filename)
+
+    with open(filename, "r") as file:
+        
+        dict = json.load(file)
+
+    in_node_dict = dict["nodes"]
+    in_edge_dict = dict["edges"]
+
+    node_dict = {}
+    edge_dict = {}
+
+    for n in in_node_dict:
+        
+        node = Node(parent, float( in_node_dict[n]["posX"] ), float( in_node_dict[n]["posY"] ) , int(n), in_node_dict[n]["nodeType"] ) 
+        node.title = in_node_dict[n]["title"]
+        node.threshold = float(in_node_dict[n]["threshold"])
+        node.input_spikes = in_node_dict[n]["input_spikes"]
+
+        node_dict[ int(n) ] = node
 
 
-
+    for e in in_edge_dict:
+        edge = Edge( node_dict[ int(in_edge_dict[e]["sourceNode"] ) ], node_dict[ int(in_edge_dict[e]["sinkNode"]) ] , float( in_edge_dict[e]["weight"] ), float( in_edge_dict[e]["delay"] ) )
+        edge_dict[e] = edge
+    
+    print(node_dict)
+    print(edge_dict)
+    return node_dict, edge_dict
 
 

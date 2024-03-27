@@ -136,3 +136,14 @@ class Edge(QGraphicsPathItem):
             # Adds the spike to path
             self.path.addEllipse(QPointF(cx, cy) , 15, 15)
 
+    def outputEdgeAsDict(self):
+
+        d = {}
+
+        d["sourceNode"] = self.sourceNode.id
+        d["sinkNode"] = self.sinkNode.id
+
+        d["weight"] = self.weight
+        d["delay"] = self.delay
+
+        return d
