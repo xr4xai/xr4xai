@@ -145,6 +145,12 @@ class AGraphicsView(QGraphicsView):
 
             elif(event.button() == Qt.MouseButton.LeftButton and len(self.edgeBuf) != 0):
                 self.connectNodes(item)
+        
+        elif(type(item) is Edge):
+
+            if(event.button() == Qt.MouseButton.RightButton):
+                self.rightClickEdge(event)
+
 
 
         return super().mousePressEvent(event)
@@ -165,7 +171,9 @@ class AGraphicsView(QGraphicsView):
         menu = QMenu(self)
 
         menu.addAction(self.addEdgeAction)
-        
+        menu.addAction(self.editNodeTitleAction)
+        menu.addAction(self.editNodeThresholdAction)
+
         nodeTypeMenu = menu.addMenu("Edit Node Type")
         nodeTypeMenu.addAction(self.editNodeTypeInputAction)
         nodeTypeMenu.addAction(self.editNodeTypeHiddenAction)
@@ -176,7 +184,18 @@ class AGraphicsView(QGraphicsView):
 
         
         menu.exec(event.globalPosition().toPoint() )
-        
+
+    def rightClickEdge(self, event):
+
+        edge = self.itemAt(event.pos() )
+
+        menu = QMenu(self)
+
+        menu.addAction(self.editEdgeWeightAction)
+        menu.addAction(self.editEdgeDelayAction)
+        menu.addAction(self.deleteEdgeAction)
+
+        menu.exec(event.globalPosition().toPoint() )
         
 
     # Creates a node at user click positon 
@@ -265,6 +284,14 @@ class AGraphicsView(QGraphicsView):
         self.addEdgeAction.setText("Create Edge")
         self.addEdgeAction.triggered.connect(lambda: self.connectNodes(self.itemAt(self.mostRecentEvent.pos() )) ) 
 
+        self.editNodeTitleAction = QAction(self)
+        self.editNodeTitleAction.setText("Edit Node Title")
+        self.editNodeTitleAction.triggered.connect(lambda: self.editNodeTitle(self.itemAt(self.mostRecentEvent.pos() ) ) )
+
+        self.editNodeThresholdAction = QAction(self)
+        self.editNodeThresholdAction.setText("Edit Node Threshold")
+        self.editNodeThresholdAction.triggered.connect(lambda: self.editNodeThreshold(self.itemAt(self.mostRecentEvent.pos() ) ) )
+
         self.editNodeTypeInputAction = QAction(self)
         self.editNodeTypeInputAction.setText("Input")
         self.editNodeTypeInputAction.triggered.connect(lambda: self.editNodeType(self.itemAt(self.mostRecentEvent.pos()), "input" ) )
@@ -282,6 +309,18 @@ class AGraphicsView(QGraphicsView):
         self.editNodeInputSpikesAction.setText("Edit Input Spikes")
         self.editNodeInputSpikesAction.triggered.connect(lambda: self.editInputSpikes(self.itemAt(self.mostRecentEvent.pos()) ) ) 
     
+        self.editEdgeWeightAction = QAction(self)
+        self.editEdgeWeightAction.setText("Edit Edge Weight")
+        self.editEdgeWeightAction.triggered.connect(lambda: self.editEdgeWeight(self.itemAt(self.mostRecentEvent.pos() ) ) )
+
+        self.editEdgeDelayAction = QAction(self)
+        self.editEdgeDelayAction.setText("Edit Edge Delay")
+        self.editEdgeDelayAction.triggered.connect(lambda: self.editEdgeDelay(self.itemAt(self.mostRecentEvent.pos() ) ) )
+
+        self.deleteEdgeAction = QAction(self)
+        self.deleteEdgeAction.setText("Delete Edge")
+        self.deleteEdgeAction.triggered.connect(lambda: self.deleteEdge(self.itemAt(self.mostRecentEvent.pos() ) ) )
+
     def saveNetworkToFile(self):
 
         fn, ok = QInputDialog.getText(self, "Save As", "Save Network to File: ", QLineEdit.EchoMode.Normal, "" )
@@ -307,6 +346,29 @@ class AGraphicsView(QGraphicsView):
 
             self.updateVecs()
 
+    def editNodeTitle(self, node):
+        
+        text, ok = QInputDialog.getText(self, "Edit Title", "Change Node Title", QLineEdit.EchoMode.Normal, node.title )
+
+        if ok and text:
+            node.title = text
+            self.updateNodes()     
+
+    def editNodeThreshold(self, node):
+        
+        text, ok = QInputDialog.getText(self, "Edit Threshold", "Change Node Threshold", QLineEdit.EchoMode.Normal, str(node.threshold) )
+
+        if ok and text:
+            try:
+                node.threshold = float(text)
+                
+            except ValueError:
+                    print(text, " is not castable to float")
+
+            self.updateVecs()
+
+
+
     def editNodeType(self, node, newtype):
 
         node.nodeType = newtype
@@ -329,13 +391,51 @@ class AGraphicsView(QGraphicsView):
             for x in text.split(',') :
                 try:
                     input_spikes.append( int(x.lstrip('[').rstrip(']').strip()) )
+                    node.input_spikes = input_spikes
+
                 except ValueError:
                     print(x + " in input not castable to int.")
 
-            node.input_spikes = input_spikes
 
             self.updateVecs()
         
+    def editEdgeWeight(self, edge):
+        
+        text, ok = QInputDialog.getText(self, "Edit Edge Weight", "Change Edge Weight", QLineEdit.EchoMode.Normal, str(edge.weight) )
+
+        if ok and text:
+            try:
+                edge.weight = float(text)
+                
+            except ValueError:
+                    print(text, " is not castable to float")
+
+            self.updateVecs()
+    
+    def editEdgeDelay(self, edge):
+        
+        text, ok = QInputDialog.getText(self, "Edit Delay", "Change Edge Delay", QLineEdit.EchoMode.Normal, str(edge.delay) )
+
+        if ok and text:
+            try:
+                edge.delay = float(text)
+                
+            except ValueError:
+                    print(text, " is not castable to float")
+
+            self.updateVecs()
+
+    def deleteEdge(self, edge):
+        key = str(edge.sourceNode.id) + "->" + str(edge.sinkNode.id)
+        
+        try:
+            del self.dictOfEdges[key]
+            self.scene.removeItem(edge)
+        except KeyError:
+            print("The key is not in the dict somehow. Uhhhhhh. Idk how we could even get to this state.")
+            
+
+
     """
     Okay, so the neuroprocessor demands that input node ids come before output/hidden node ids.
     I don't particullary like this, but what do I know.

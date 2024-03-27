@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
     QGraphicsItem, 
     QGraphicsRectItem, 
     QGraphicsEllipseItem, 
+    QGraphicsTextItem,
     )
 from PyQt6.QtGui import (
     QBrush, 
@@ -22,7 +23,8 @@ from PyQt6.QtGui import (
     QMouseEvent, 
     QPen, 
     QColor, 
-    QDrag, 
+    QDrag,
+    QPainter,
     QPainterPath, 
     QGradient, 
     QRadialGradient, 
@@ -56,8 +58,7 @@ class Node(QGraphicsEllipseItem):
         self.threshold = 1
         self.title = ""
         
-
-        self.setToolTip(f"Node ID: {self.id}\nNode Type: {self.nodeType}\nSpike Vec: {self.spike_vec}")
+        self.setToolTip(f"Node ID: {self.id}\nNode Type: {self.nodeType}\nThreshold: {self.threshold}\nTitle: {self.title}\nSpike Vec: {self.spike_vec}")
 
         self.makeGradient()
         brush = QBrush(self.gradient)
@@ -104,7 +105,7 @@ class Node(QGraphicsEllipseItem):
     def update(self):
         self.makeGradient()
         self.setBrush( QBrush(self.gradient) )
-        self.setToolTip(f"Node ID: {self.id}\nNode Type: {self.nodeType}\nSpike Vec: {self.spike_vec}")
+        self.setToolTip(f"Node ID: {self.id}\nNode Type: {self.nodeType}\nThreshold: {self.threshold}\nTitle: {self.title}\nSpike Vec: {self.spike_vec}")
 
 
     def outputNodeAsDict(self):
