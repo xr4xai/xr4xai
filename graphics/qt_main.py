@@ -179,6 +179,9 @@ class AGraphicsView(QGraphicsView):
         nodeTypeMenu.addAction(self.editNodeTypeHiddenAction)
         nodeTypeMenu.addAction(self.editNodeTypeOutputAction)
         
+        menu.addAction(self.deleteNodeAction)
+
+
         if(node.nodeType == "input"):
             menu.addAction(self.editNodeInputSpikesAction) 
 
@@ -321,6 +324,10 @@ class AGraphicsView(QGraphicsView):
         self.deleteEdgeAction.setText("Delete Edge")
         self.deleteEdgeAction.triggered.connect(lambda: self.deleteEdge(self.itemAt(self.mostRecentEvent.pos() ) ) )
 
+        self.deleteNodeAction = QAction(self)
+        self.deleteNodeAction.setText("Delete Node")
+        self.deleteNodeAction.triggered.connect(lambda: self.deleteNode(self.itemAt(self.mostRecentEvent.pos() ) ) )
+    
     def saveNetworkToFile(self):
 
         fn, ok = QInputDialog.getText(self, "Save As", "Save Network to File: ", QLineEdit.EchoMode.Normal, "" )
@@ -429,11 +436,30 @@ class AGraphicsView(QGraphicsView):
         key = str(edge.sourceNode.id) + "->" + str(edge.sinkNode.id)
         
         try:
-            del self.dictOfEdges[key]
+            self.dictOfEdges.pop(key)
             self.scene.removeItem(edge)
         except KeyError:
-            print("The key is not in the dict somehow. Uhhhhhh. Idk how we could even get to this state.")
+            print("The key ", key, " is not in the dict somehow. Uhhhhhh. Idk how we could even get to this state.")
+    
+    def deleteNode(self, node):
+        key = node.id
+
+        try:
+            to_del = []            
+            for e in self.dictOfEdges:
+                if self.dictOfEdges[e].sourceNode.id == key or self.dictOfEdges[e].sinkNode.id == key:
+                    to_del.append(self.dictOfEdges[e])        
+            for e in to_del:
+                self.deleteEdge(e)
+
+            self.dictOfNodes.pop(key)
+            self.scene.removeItem(node)
             
+            self.reorderNodeIds()
+
+        except KeyError:
+            print("The key is not in the dict somehow. Uhhhhhh. Idk how we could even get to this state.")
+ 
 
 
     """
@@ -477,13 +503,13 @@ class AGraphicsView(QGraphicsView):
             newNodeDict[i + len(hidden_nodes) + len(input_nodes) ] = output_nodes[i]
 
         for e in self.dictOfEdges.values():
-            key = str(e.sourceNode) + "->" + str(e.sinkNode)
+            key = str(e.sourceNode.id) + "->" + str(e.sinkNode.id)
 
             newEdgeDict[key] = e
 
         self.dictOfEdges = newEdgeDict
         self.dictOfNodes = newNodeDict
-
+        self.curId = len(newNodeDict)
 
 
 
