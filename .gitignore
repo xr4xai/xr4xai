@@ -3,4 +3,5 @@ __pycache__/*
 .DS_Store
 .DS_Store/*
 .catkin_tools/*
+.neuro.env
 tracking/calib_images/.vscode/*
