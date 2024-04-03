@@ -47,6 +47,7 @@ The tracker is from [this article](https://www.section.io/engineering-education/
 
 Still working on this
 
-
-
-
+- Create file `.neuro.env`
+- Add the line `FRAME_WORK=<neuromorphic framework venv file>`
+- `source start`
+- `python3 ./graphics/qt_main.py`

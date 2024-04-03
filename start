@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+if [ -z $(cat .neuro.env) ]; then
+    echo "Usage: Please create .neuro.env\n    Add FRAME_WORK=<neuromorphic framework venv file>"
+fi
+
+source .neuro.env
+source $FRAME_WORK
+
+pip install pyqt6
