@@ -19,7 +19,7 @@ risp_config = {
   "discrete": False
 }
 
-def get_vecs_from_dicts(node_dict, edge_dict):
+def get_vecs_from_dicts(node_dict, edge_dict, min = 0.0, max = 10.0):
 
     proc = risp.Processor(risp_config)
 
@@ -61,7 +61,7 @@ def get_vecs_from_dicts(node_dict, edge_dict):
     print(spikes)
     proc.apply_spikes(spikes)
 
-    proc.run(10)
+    proc.run(max)
     v = proc.neuron_vectors()
     print(v)
 

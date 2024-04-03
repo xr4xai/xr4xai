@@ -22,6 +22,7 @@ from PyQt6.QtWidgets import (
     QSlider,
     QWidget,
     QVBoxLayout,
+    QHBoxLayout,
     QMenu,
     QMenuBar,
     QLineEdit,
@@ -29,6 +30,8 @@ from PyQt6.QtWidgets import (
     QInputDialog,
     QMainWindow,
     QLayout,
+    QLabel,
+    QTableWidget,
     )
 from PyQt6.QtGui import (
     QBrush, 
@@ -50,7 +53,8 @@ from PyQt6.QtCore import (
     QObject, 
     QLineF, 
     QMimeData,
-    QPointF
+    QPointF,
+    QTimer,
     )
 
 import os
@@ -66,17 +70,19 @@ from qt_edge import Edge
 
 
 class AGraphicsView(QGraphicsView):
-    def __init__(self, scene: QGraphicsScene):
+    def __init__(self, scene: QGraphicsScene, layout: QLayout):
         super().__init__(scene)
         self.scene = scene
-
+        self.layout = layout
     
         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
         self.centerOn(400,300)
 
         self.createMenuActions()
 
-        self.visual_time = -1
+        self.visual_time = 0
+        self.minimum_time = 0
+        self.maximum_time = 10
 
         self.curId = 0
         self.nodeIds = []
@@ -116,8 +122,10 @@ class AGraphicsView(QGraphicsView):
     # When the slider is updated, it updates the visual time for the GUI
     # and then updates all the edges
     def updateSimTimeFromSlider(self, val):
-        self.visual_time = val / 10
-        print(self.visual_time)
+        self.visual_time = val / 100 * (self.maximum_time - self.minimum_time) + self.minimum_time
+        
+        self.layout.timelabel.setText( rf't = {self.visual_time:.2f}')
+        #print(self.visual_time)
 
         self.updateEdges()
         self.updateNodes()
@@ -247,7 +255,7 @@ class AGraphicsView(QGraphicsView):
         self.updateVecs()
 
     def updateVecs(self):
-        self.spike_vec = network_communication.get_vecs_from_dicts(self.dictOfNodes, self.dictOfEdges)
+        self.spike_vec = network_communication.get_vecs_from_dicts(self.dictOfNodes, self.dictOfEdges, min = self.minimum_time, max = self.maximum_time)
 
         self.updateNodes();
         self.updateEdges();
@@ -512,6 +520,7 @@ class AGraphicsView(QGraphicsView):
         self.curId = len(newNodeDict)
 
 
+    
 
 
 class Layout(QWidget):
@@ -522,18 +531,49 @@ class Layout(QWidget):
         vbox = QVBoxLayout(self)
       
         self.scene = QGraphicsScene(-1500, -1500, 3000, 3000)
-        self.view = AGraphicsView(self.scene)
+        self.view = AGraphicsView(self.scene, self)
         
+        self.timebox = QHBoxLayout(self)
+
+        self.play_button = QPushButton("&Play",self)
+        self.is_playing = False
+        self.play_button.clicked.connect(self.playButtonClicked)
+        
+
+        self.minText = QLineEdit(self)
+        self.minText.setText('0')
+        self.minText.textChanged.connect(self.minTextChanged)
+        self.minText.setMaximumWidth( 50 ) 
+        self.minText.setToolTip("Minimum Time")
+
         # Add Slider for time
-        time_slider = QSlider(Qt.Orientation.Horizontal, self)
-        time_slider.setRange(0, 100)
+        self.time_slider = QSlider(Qt.Orientation.Horizontal, self)
+        self.time_slider.setRange(0, 100)
         self.visual_time = 0
-        time_slider.setValue(0)
-        time_slider.move(25, 25)
+        self.time_slider.setValue(0)
+        self.time_slider.move(25, 25)
 
-        time_slider.valueChanged.connect(self.view.updateSimTimeFromSlider)
+        self.time_slider.valueChanged.connect(self.view.updateSimTimeFromSlider)
 
-        vbox.addWidget(time_slider)
+        # Label for time
+        self.timelabel = QLabel()
+        self.timelabel.setText( rf't = {self.view.visual_time:.2f}')
+        self.timelabel.setToolTip("Current Simulation Time")
+
+        # max time box
+        self.maxText = QLineEdit(self)
+        self.maxText.setText('10')
+        self.maxText.textChanged.connect(self.maxTextChanged)
+        self.maxText.setMaximumWidth( 50)        
+        self.maxText.setToolTip("Maximum Time")
+
+        self.timebox.addWidget(self.play_button, stretch = .1)
+        self.timebox.addWidget(self.minText, stretch = .1)
+        self.timebox.addWidget(self.time_slider, stretch = .7)
+        self.timebox.addWidget(self.timelabel)
+        self.timebox.addWidget(self.maxText, stretch = .1)
+
+        vbox.addLayout(self.timebox)
         vbox.addWidget(self.view)
 
         menuBar = QMenuBar(self)    
@@ -552,6 +592,54 @@ class Layout(QWidget):
         vbox.setMenuBar(menuBar)
     
         self.setLayout(vbox)
+
+        self.tps = 1
+        self.fps = 10
+        self.timer = QTimer()
+        self.timer.setInterval(100)
+        self.timer.timeout.connect(self.update)
+        
+
+    def playButtonClicked(self):
+        if(self.is_playing):
+            self.play_button.setText("Play")
+            self.is_playing = False
+            self.timer.stop()
+        else:
+            if(self.time_slider.value() >= 100):
+                self.time_slider.setValue(0)
+
+            self.play_button.setText("Pause")
+            self.is_playing = True
+            self.timer.start()
+
+    def minTextChanged(self):
+        try:
+            new_min = float(self.minText.text() )
+            if(new_min < self.view.maximum_time and new_min >= 0):
+                self.view.minimum_time = new_min
+                self.view.updateVecs()
+        except ValueError:
+            print("Value error in minText")
+
+    def maxTextChanged(self):
+        try:
+            new_max = float(self.maxText.text() )
+            if(new_max > self.view.minimum_time and new_max >= 0):
+                self.view.maximum_time = new_max
+                self.view.updateVecs()
+        except ValueError:
+            print("Value error in maxText")
+
+    def update(self):
+        value = self.time_slider.value()
+        new_val = value + (100 / (self.view.maximum_time - self.view.minimum_time) / self.fps * self.tps) 
+        if new_val <= 100:
+            self.time_slider.setValue( new_val )
+        else:
+            self.play_button.setText("Play")
+            self.is_playing = False 
+            self.timer.stop()
    
 # Main creates an app with a scence that has a view that is our graphics view.
 if __name__ == "__main__":
