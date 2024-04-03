@@ -567,11 +567,11 @@ class Layout(QWidget):
         self.maxText.setMaximumWidth( 50)        
         self.maxText.setToolTip("Maximum Time")
 
-        self.timebox.addWidget(self.play_button, stretch = .1)
-        self.timebox.addWidget(self.minText, stretch = .1)
-        self.timebox.addWidget(self.time_slider, stretch = .7)
+        self.timebox.addWidget(self.play_button)
+        self.timebox.addWidget(self.minText)
+        self.timebox.addWidget(self.time_slider)
         self.timebox.addWidget(self.timelabel)
-        self.timebox.addWidget(self.maxText, stretch = .1)
+        self.timebox.addWidget(self.maxText)
 
         vbox.addLayout(self.timebox)
         vbox.addWidget(self.view)
