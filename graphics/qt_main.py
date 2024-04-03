@@ -635,7 +635,7 @@ class Layout(QWidget):
         value = self.time_slider.value()
         new_val = value + (100 / (self.view.maximum_time - self.view.minimum_time) / self.fps * self.tps) 
         if new_val <= 100:
-            self.time_slider.setValue( new_val )
+            self.time_slider.setValue( int(new_val) )
         else:
             self.play_button.setText("Play")
             self.is_playing = False 
