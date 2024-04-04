@@ -8,3 +8,4 @@ source .neuro.env
 source $FRAME_WORK
 
 pip install pyqt6
+pip install pyqtribbon
