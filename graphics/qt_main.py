@@ -153,6 +153,9 @@ class AGraphicsView(QGraphicsView):
 
             elif(event.button() == Qt.MouseButton.LeftButton and len(self.edgeBuf) != 0):
                 self.connectNodes(item)
+
+            elif(event.type() == QEvent.Type.MouseButtonDblClick):
+                self.connectNodes(item)
         
         elif(type(item) is Edge):
 
@@ -167,7 +170,12 @@ class AGraphicsView(QGraphicsView):
 
         menu = QMenu(self)
 
-        menu.addAction(self.addNodeAction)
+        # menu.addAction(self.addNodeAction)
+        nodeTypeMenu = menu.addMenu("Add Node")
+        nodeTypeMenu.addAction(self.addNodeActionHidden)
+        nodeTypeMenu.addAction(self.addNodeActionInput)
+        nodeTypeMenu.addAction(self.addNodeActionOutput)
+ 
 
         # Gotta love how to change everything for no reason in new Qt versions
         menu.exec(event.globalPosition().toPoint() )
@@ -210,8 +218,8 @@ class AGraphicsView(QGraphicsView):
         
 
     # Creates a node at user click positon 
-    def addNodeEvent(self):
-        node = Node(self, self.mostRecentEvent.pos().x(), self.mostRecentEvent.pos().y(), self.curId, "hidden")
+    def addNodeEvent(self, type):
+        node = Node(self, self.mostRecentEvent.pos().x(), self.mostRecentEvent.pos().y(), self.curId, type)
         self.dictOfNodes[self.curId] = node
         self.curId+=1
 
@@ -287,10 +295,18 @@ class AGraphicsView(QGraphicsView):
     # Creates all the actions (and connects them to appropriate functions)
     # for anything and everything that might be used in a menu
     def createMenuActions(self):
-        self.addNodeAction = QAction(self)
-        self.addNodeAction.setText("Add Node")
-        self.addNodeAction.triggered.connect(self.addNodeEvent)
+        self.addNodeActionHidden = QAction(self)
+        self.addNodeActionHidden.setText("Hidden")
+        self.addNodeActionHidden.triggered.connect(lambda: self.addNodeEvent("hidden"))
         
+        self.addNodeActionInput = QAction(self)
+        self.addNodeActionInput.setText("Input")
+        self.addNodeActionInput.triggered.connect(lambda: self.addNodeEvent("input"))
+
+        self.addNodeActionOutput = QAction(self)
+        self.addNodeActionOutput.setText("Output")
+        self.addNodeActionOutput.triggered.connect(lambda: self.addNodeEvent("output"))
+
         self.addEdgeAction = QAction(self)
         self.addEdgeAction.setText("Create Edge")
         self.addEdgeAction.triggered.connect(lambda: self.connectNodes(self.itemAt(self.mostRecentEvent.pos() )) ) 
