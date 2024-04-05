@@ -90,14 +90,33 @@ class Edge(QGraphicsPathItem):
     # and making spikes more clear. PLus they look kinda shitty esp if you the nodes are at a certain angle
     def draw_edge(self):
 
+        # This solution was found here:
+        # https://stackoverflow.com/questions/7854043/drawing-rectangle-between-two-points-with-arbitrary-width
+
+        width = 8
+        Vx = self.sourceNode.pos().x() - self.sinkNode.pos().x()
+        Vy = self.sourceNode.pos().y() - self.sinkNode.pos().y()
+
+        Px = Vy  # Use separate variable otherwise you overwrite X coordinate here
+        Py = -Vx # Flip the sign of either the X or Y (edit by adam.wulf)
+
+        Length = math.sqrt(Px * Px + Py * Py); # Thats length of perpendicular
+        Nx = Px / Length
+        Ny = Py / Length # Now N is normalized perpendicular
+
+        point1 = QPointF(self.sinkNode.pos().x() + Nx * width / 2, self.sinkNode.pos().y() + Ny * width / 2)
+        point2 = QPointF(self.sourceNode.pos().x() + Nx * width / 2, self.sourceNode.pos().y() + Ny * width / 2)
+        point3 = QPointF(self.sourceNode.pos().x() - Nx * width / 2, self.sourceNode.pos().y() - Ny * width / 2)
+        point4 = QPointF(self.sinkNode.pos().x() - Nx * width / 2, self.sinkNode.pos().y() - Ny * width / 2)
+
         # Draws the edge
-        self.path.moveTo(self.sourceNode.pos().x() + 3, self.sourceNode.pos().y() + 3 )
+        self.path.moveTo(point1)
 
         # These bezier curves would look better with differnt end and control points
-        self.path.quadTo(self.sinkNode.pos().x() +3, self.sinkNode.pos().y() + 3, self.sinkNode.pos().x() + 3, self.sinkNode.pos().y() + 3 )
-        self.path.quadTo(self.sinkNode.pos().x() -  3, self.sinkNode.pos().y() - 3, self.sinkNode.pos().x() - 3, self.sinkNode.pos().y() - 3 )
-        self.path.quadTo(self.sourceNode.pos().x() - 3, self.sourceNode.pos().y() - 3, self.sourceNode.pos().x() - 3, self.sourceNode.pos().y() - 3 )
-        self.path.quadTo(self.sourceNode.pos().x() + 3, self.sourceNode.pos().y() + 3, self.sourceNode.pos().x() + 3, self.sourceNode.pos().y() + 3)
+        self.path.quadTo(point1, point2)
+        self.path.quadTo(point2, point3)
+        self.path.quadTo(point3, point4)
+        self.path.quadTo(point4, point1)
         
 
         # Draws the spikes currently along the edge onto the edge
