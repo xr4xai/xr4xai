@@ -68,6 +68,7 @@ import json
 from qt_node import Node
 from qt_edge import Edge
 
+from pyqtribbon import RibbonBar
 
 class AGraphicsView(QGraphicsView):
     def __init__(self, scene: QGraphicsScene, layout: QLayout):
@@ -592,9 +593,10 @@ class Layout(QWidget):
         vbox.addLayout(self.timebox)
         vbox.addWidget(self.view)
 
-        menuBar = QMenuBar(self)    
+        # menuBar = QMenuBar(self)    
         fileMenu = QMenu("File", self)
-        menuBar.addMenu(fileMenu)
+        ribbonBar = RibbonBar(self)
+        ribbonBar.addFileMenu()
 
         self.saveAction = QAction("Save As", self.view)
         self.saveAction.triggered.connect(self.view.saveNetworkToFile)
@@ -605,7 +607,7 @@ class Layout(QWidget):
         fileMenu.addAction(self.saveAction)
         fileMenu.addAction(self.openAction)
 
-        vbox.setMenuBar(menuBar)
+        vbox.setMenuBar(ribbonBar)
     
         self.setLayout(vbox)
 
