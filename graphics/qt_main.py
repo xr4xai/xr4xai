@@ -45,6 +45,7 @@ from PyQt6.QtGui import (
     QRadialGradient, 
     QLinearGradient,
     QAction,
+    QIcon,
     )
 from PyQt6.QtCore import (
     QRectF, 
@@ -594,20 +595,24 @@ class Layout(QWidget):
         vbox.addWidget(self.view)
 
         # menuBar = QMenuBar(self)    
-        fileMenu = QMenu("File", self)
-        ribbonBar = RibbonBar(self)
-        ribbonBar.addFileMenu()
+        self.fileMenu = QMenu("File", self)
+        self.ribbonBar = RibbonBar(self)
 
-        self.saveAction = QAction("Save As", self.view)
-        self.saveAction.triggered.connect(self.view.saveNetworkToFile)
+        self.fcategory = self.ribbonBar.addCategory("File")
+        self.fpanel = self.fcategory.addPanel("file")
+        self.SaveButton = self.fpanel.addSmallButton("Save As", QIcon("../Fugue/icons/folder--plus.png"))
+        self.OpenButton = self.fpanel.addSmallButton("Open", QIcon("../Fugue/icons/folder.png"))
+
+        # self.saveAction = QAction("Save As", self.view)
+        self.SaveButton.triggered.connect(self.view.saveNetworkToFile)
         
-        self.openAction = QAction("Open", self.view)
-        self.openAction.triggered.connect(self.view.openNetworkFile)
+        # self.openAction = QAction("Open", self.view)
+        self.OpenButton.triggered.connect(self.view.openNetworkFile)
 
-        fileMenu.addAction(self.saveAction)
-        fileMenu.addAction(self.openAction)
+        # self.fileMenu.addAction(self.saveAction)
+        # self.fileMenu.addAction(self.openAction)
 
-        vbox.setMenuBar(ribbonBar)
+        vbox.setMenuBar(self.ribbonBar)
     
         self.setLayout(vbox)
 

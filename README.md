@@ -51,3 +51,7 @@ Still working on this
 - Add the line `FRAME_WORK=<neuromorphic framework venv file>`
 - `source start`
 - `python3 ./graphics/qt_main.py`
+
+## Credit this
+
+- [Icons](https://p.yusukekamiyamane.com/)
