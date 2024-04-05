@@ -96,6 +96,25 @@ class AGraphicsView(QGraphicsView):
         self.updateEdges()
         self.updateNodes()
 
+        # Double click timer
+        self.timer = QTimer()
+        self.timer.setInterval(250)
+        self.timer.setSingleShot(True)
+        self.timer.timeout.connect(self.timeout)
+        self.click_count = 0
+
+    # Timeout function for the double click timer
+    def timeout(self):
+        item = self.itemAt(self.mostRecentEvent.pos()) 
+
+        if (self.click_count == 1 and len(self.edgeBuf) != 0):
+            print("Single Click")
+            self.connectNodes(item)
+        elif self.click_count > 1:
+            print("Double Click")
+            self.connectNodes(item)
+        self.click_count = 0
+
 
     # This creates the test network. It will be usurped by code that
     # creates networks from abitrary files/neuro instances
@@ -151,11 +170,13 @@ class AGraphicsView(QGraphicsView):
             if(event.button() == Qt.MouseButton.RightButton):
                 self.rightClickNode(event)
 
-            elif(event.button() == Qt.MouseButton.LeftButton and len(self.edgeBuf) != 0):
-                self.connectNodes(item)
-
-            elif(event.type() == QEvent.Type.MouseButtonDblClick):
-                self.connectNodes(item)
+            elif(event.button() == Qt.MouseButton.LeftButton):
+                self.click_count += 1
+                print("Click")
+                if not self.timer.isActive():
+                    self.timer.start()
+                # self.connectNodes(item)
+                # self.connectNodes(item)
         
         elif(type(item) is Edge):
 
@@ -172,8 +193,8 @@ class AGraphicsView(QGraphicsView):
 
         # menu.addAction(self.addNodeAction)
         nodeTypeMenu = menu.addMenu("Add Node")
-        nodeTypeMenu.addAction(self.addNodeActionHidden)
         nodeTypeMenu.addAction(self.addNodeActionInput)
+        nodeTypeMenu.addAction(self.addNodeActionHidden)
         nodeTypeMenu.addAction(self.addNodeActionOutput)
  
 
