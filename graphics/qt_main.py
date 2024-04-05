@@ -597,17 +597,19 @@ class Layout(QWidget):
         # menuBar = QMenuBar(self)    
         self.fileMenu = QMenu("File", self)
         self.ribbonBar = RibbonBar(self)
+        self.ribbonBar.setRibbonHeight(150)
+        self.ribbonBar.setRibbonStyle()
 
         self.fcategory = self.ribbonBar.addCategory("File")
         self.fpanel = self.fcategory.addPanel("file")
-        self.SaveButton = self.fpanel.addSmallButton("Save As", QIcon("../Fugue/icons/folder--plus.png"))
-        self.OpenButton = self.fpanel.addSmallButton("Open", QIcon("../Fugue/icons/folder.png"))
+        self.SaveButton = self.fpanel.addLargeButton("Save As", QIcon("./Fugue/icons/folder--plus.png"))
+        self.OpenButton = self.fpanel.addLargeButton("Open", QIcon("./Fugue/icons/folder.png"))
 
         # self.saveAction = QAction("Save As", self.view)
-        self.SaveButton.triggered.connect(self.view.saveNetworkToFile)
+        self.SaveButton.clicked.connect(self.view.saveNetworkToFile)
         
         # self.openAction = QAction("Open", self.view)
-        self.OpenButton.triggered.connect(self.view.openNetworkFile)
+        self.OpenButton.clicked.connect(self.view.openNetworkFile)
 
         # self.fileMenu.addAction(self.saveAction)
         # self.fileMenu.addAction(self.openAction)
