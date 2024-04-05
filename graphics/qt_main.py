@@ -224,7 +224,8 @@ class AGraphicsView(QGraphicsView):
         self.curId+=1
 
         self.scene.addItem(node)
-
+        
+        self.reorderNodeIds()
         self.updateVecs()
 
     # If the buttons pressed, set a flag so the next click creates a node
