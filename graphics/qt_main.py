@@ -597,7 +597,7 @@ class Layout(QWidget):
         # menuBar = QMenuBar(self)    
         self.fileMenu = QMenu("File", self)
         self.ribbonBar = RibbonBar(self)
-        self.ribbonBar.setRibbonHeight(150)
+        self.ribbonBar.setRibbonHeight(125)
 
         self.fcategory = self.ribbonBar.addCategory("File")
         self.fpanel = self.fcategory.addPanel("file")
