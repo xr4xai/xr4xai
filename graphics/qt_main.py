@@ -172,8 +172,8 @@ class AGraphicsView(QGraphicsView):
 
         # menu.addAction(self.addNodeAction)
         nodeTypeMenu = menu.addMenu("Add Node")
-        nodeTypeMenu.addAction(self.addNodeActionHidden)
         nodeTypeMenu.addAction(self.addNodeActionInput)
+        nodeTypeMenu.addAction(self.addNodeActionHidden)
         nodeTypeMenu.addAction(self.addNodeActionOutput)
  
 
