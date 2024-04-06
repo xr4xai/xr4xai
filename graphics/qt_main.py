@@ -122,8 +122,7 @@ class AGraphicsView(QGraphicsView):
     # When the slider is updated, it updates the visual time for the GUI
     # and then updates all the edges
     def updateSimTimeFromSlider(self, val):
-        self.visual_time = val / 100 * (self.maximum_time - self.minimum_time) + self.minimum_time
-        
+        self.visual_time = val / self.layout.tps        
         self.layout.timelabel.setText( rf't = {self.visual_time:.2f}')
         #print(self.visual_time)
 
@@ -420,12 +419,13 @@ class AGraphicsView(QGraphicsView):
             for x in text.split(',') :
                 try:
                     input_spikes.append( int(x.lstrip('[').rstrip(']').strip()) )
-                    node.input_spikes = input_spikes
 
                 except ValueError:
                     print(x + " in input not castable to int.")
 
 
+            
+            node.input_spikes = input_spikes
             self.updateVecs()
         
     def editEdgeWeight(self, edge):
@@ -562,7 +562,7 @@ class Layout(QWidget):
 
         # Add Slider for time
         self.time_slider = QSlider(Qt.Orientation.Horizontal, self)
-        self.time_slider.setRange(0, 100)
+        self.time_slider.setRange(0, 2000)
         self.visual_time = 0
         self.time_slider.setValue(0)
         self.time_slider.move(25, 25)
@@ -607,11 +607,12 @@ class Layout(QWidget):
     
         self.setLayout(vbox)
 
-        self.tps = 1
-        self.fps = 10
+        self.tps = 20
+        self.fps = 20
         self.timer = QTimer()
-        self.timer.setInterval(100)
+        self.timer.setInterval(1000 / self.fps)
         self.timer.timeout.connect(self.update)
+        self.time_slider.setRange(self.view.minimum_time * self.tps, self.tps * self.view.maximum_time)
         
 
     def playButtonClicked(self):
@@ -620,8 +621,8 @@ class Layout(QWidget):
             self.is_playing = False
             self.timer.stop()
         else:
-            if(self.time_slider.value() >= 100):
-                self.time_slider.setValue(0)
+            if(self.time_slider.value() >= self.tps * self.view.maximum_time ):
+                self.time_slider.setValue(self.view.minimum_time * self.tps)
 
             self.play_button.setText("Pause")
             self.is_playing = True
@@ -632,6 +633,7 @@ class Layout(QWidget):
             new_min = float(self.minText.text() )
             if(new_min < self.view.maximum_time and new_min >= 0):
                 self.view.minimum_time = new_min
+                self.time_slider.setRange(self.view.minimum_time * self.tps, self.tps * self.view.maximum_time)
                 self.view.updateVecs()
         except ValueError:
             print("Value error in minText")
@@ -641,14 +643,15 @@ class Layout(QWidget):
             new_max = float(self.maxText.text() )
             if(new_max > self.view.minimum_time and new_max >= 0):
                 self.view.maximum_time = new_max
+                self.time_slider.setRange(self.view.minimum_time * self.tps, self.tps * self.view.maximum_time)
                 self.view.updateVecs()
         except ValueError:
             print("Value error in maxText")
 
     def update(self):
         value = self.time_slider.value()
-        new_val = value + (100 / (self.view.maximum_time - self.view.minimum_time) / self.fps * self.tps) 
-        if new_val <= 100:
+        new_val = value + 1
+        if new_val <= self.tps * self.view.maximum_time:
             self.time_slider.setValue( int(new_val) )
         else:
             self.play_button.setText("Play")
