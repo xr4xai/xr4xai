@@ -57,6 +57,8 @@ class Node(QGraphicsEllipseItem):
         self.input_spikes = []
         self.threshold = 1
         self.title = ""
+        self.visual_time = -1
+        self.spike_index = 0
         
         self.setToolTip(f"Node ID: {self.id}\nNode Type: {self.nodeType}\nThreshold: {self.threshold}\nTitle: {self.title}\nSpike Vec: {self.spike_vec}")
 
@@ -103,6 +105,11 @@ class Node(QGraphicsEllipseItem):
             self.gradient.setColorAt(1, QColor(72, 159, 233, 255 ) )       
 
     def update(self):
+        print(self.visual_time)
+        if len(self.spike_vec) > self.spike_index:
+            if self.spike_vec[self.spike_index] > self.visual_time:
+                print("--] Spike!")
+                self.spike_index += 1
         self.makeGradient()
         self.setBrush( QBrush(self.gradient) )
         self.setToolTip(f"Node ID: {self.id}\nNode Type: {self.nodeType}\nThreshold: {self.threshold}\nTitle: {self.title}\nSpike Vec: {self.spike_vec}")
