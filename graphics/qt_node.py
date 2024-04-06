@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
     QGraphicsRectItem, 
     QGraphicsEllipseItem, 
     QGraphicsTextItem,
+    QGraphicsPathItem,
     )
 from PyQt6.QtGui import (
     QBrush, 
@@ -29,6 +30,8 @@ from PyQt6.QtGui import (
     QGradient, 
     QRadialGradient, 
     QLinearGradient,
+    QFont,
+    QFontMetrics,
     )
 from PyQt6.QtCore import (
     QRectF, 
@@ -70,6 +73,24 @@ class Node(QGraphicsEllipseItem):
         self.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsMovable | QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
         self.setAcceptDrops(True)
 
+        self.titlePathItem = QGraphicsPathItem()
+        self.titleBrush = QBrush(QColor(255, 255,255, 255) ) # Black brush
+        self.titlePathItem.setBrush(self.titleBrush)
+        self.parent.scene.addItem(self.titlePathItem)
+        self.titlePathItem.setZValue(100)
+        self.titlePath = QPainterPath()
+        self.titleFont = QFont("Helvetica", 36)       
+        self.draw_title()
+
+        self.titlePathItem.setPath(self.titlePath)
+
+    def draw_title(self):
+
+        fm = QFontMetrics(self.titleFont)
+        width = fm.horizontalAdvance(self.title)
+        height = fm.height()
+        self.titlePath.addText(self.pos().x() - (width / 2), self.pos().y() + (height / 2),  self.titleFont, self.title)
+
     # If mouse if pressed a second time, it will currently create an edge
     # We should remove that and probably move creating edges to a right click function
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
@@ -78,6 +99,7 @@ class Node(QGraphicsEllipseItem):
 
     def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         print("Release")
+        self.update()
         self.parent.updateEdges()
         return super().mouseReleaseEvent(event)
 
@@ -113,7 +135,9 @@ class Node(QGraphicsEllipseItem):
         self.makeGradient()
         self.setBrush( QBrush(self.gradient) )
         self.setToolTip(f"Node ID: {self.id}\nNode Type: {self.nodeType}\nThreshold: {self.threshold}\nTitle: {self.title}\nSpike Vec: {self.spike_vec}")
-
+        self.titlePath.clear()
+        self.draw_title()
+        self.titlePathItem.setPath(self.titlePath)
 
     def outputNodeAsDict(self):
 
