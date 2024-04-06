@@ -153,9 +153,6 @@ class AGraphicsView(QGraphicsView):
 
             elif(event.button() == Qt.MouseButton.LeftButton and len(self.edgeBuf) != 0):
                 self.connectNodes(item)
-
-            elif(event.type() == QEvent.Type.MouseButtonDblClick):
-                self.connectNodes(item)
         
         elif(type(item) is Edge):
 
