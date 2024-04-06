@@ -101,22 +101,23 @@ class Edge(QGraphicsPathItem):
         Py = -Vx # Flip the sign of either the X or Y (edit by adam.wulf)
 
         Length = math.sqrt(Px * Px + Py * Py); # Thats length of perpendicular
-        Nx = Px / Length
-        Ny = Py / Length # Now N is normalized perpendicular
+        if Length > 0:
+            Nx = Px / Length
+            Ny = Py / Length # Now N is normalized perpendicular
 
-        point1 = QPointF(self.sinkNode.pos().x() + Nx * width / 2, self.sinkNode.pos().y() + Ny * width / 2)
-        point2 = QPointF(self.sourceNode.pos().x() + Nx * width / 2, self.sourceNode.pos().y() + Ny * width / 2)
-        point3 = QPointF(self.sourceNode.pos().x() - Nx * width / 2, self.sourceNode.pos().y() - Ny * width / 2)
-        point4 = QPointF(self.sinkNode.pos().x() - Nx * width / 2, self.sinkNode.pos().y() - Ny * width / 2)
+            point1 = QPointF(self.sinkNode.pos().x() + Nx * width / 2, self.sinkNode.pos().y() + Ny * width / 2)
+            point2 = QPointF(self.sourceNode.pos().x() + Nx * width / 2, self.sourceNode.pos().y() + Ny * width / 2)
+            point3 = QPointF(self.sourceNode.pos().x() - Nx * width / 2, self.sourceNode.pos().y() - Ny * width / 2)
+            point4 = QPointF(self.sinkNode.pos().x() - Nx * width / 2, self.sinkNode.pos().y() - Ny * width / 2)
 
-        # Draws the edge
-        self.path.moveTo(point1)
+            # Draws the edge
+            self.path.moveTo(point1)
 
-        # These bezier curves would look better with differnt end and control points
-        self.path.quadTo(point1, point2)
-        self.path.quadTo(point2, point3)
-        self.path.quadTo(point3, point4)
-        self.path.quadTo(point4, point1)
+            # These bezier curves would look better with differnt end and control points
+            self.path.quadTo(point1, point2)
+            self.path.quadTo(point2, point3)
+            self.path.quadTo(point3, point4)
+            self.path.quadTo(point4, point1)
         
 
         # Draws the spikes currently along the edge onto the edge

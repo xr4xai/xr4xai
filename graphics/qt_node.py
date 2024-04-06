@@ -48,7 +48,7 @@ class Node(QGraphicsEllipseItem):
         self.d = 70
         self.r = self.d/2
         self.id = curId
-        super().__init__(0-self.r, 0-self.r, self.d, self.d)  # Initialize QPushButton with text "Click Me!"
+        super().__init__(0-self.r, 0-self.r, self.d, self.d) 
         self.setPos(x, y)
         self.setZValue(10)
         
