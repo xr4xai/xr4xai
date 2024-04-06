@@ -610,7 +610,7 @@ class Layout(QWidget):
         self.tps = 20
         self.fps = 20
         self.timer = QTimer()
-        self.timer.setInterval(1000 / self.fps)
+        self.timer.setInterval(int(1000 / self.fps))
         self.timer.timeout.connect(self.update)
         self.time_slider.setRange(self.view.minimum_time * self.tps, self.tps * self.view.maximum_time)
         
