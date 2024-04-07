@@ -133,7 +133,7 @@ class Node(QGraphicsEllipseItem):
 
     def checkSpiking(self, elapsed_spikes):
         for most_recent_spike in elapsed_spikes:
-            if most_recent_spike-0.25 < self.visual_time and most_recent_spike+0.25 > self.visual_time:  
+            if most_recent_spike <= self.visual_time and most_recent_spike+0.15 > self.visual_time:  
                 self.spiking = True
                 return
         self.spiking = False 
