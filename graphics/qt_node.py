@@ -62,6 +62,7 @@ class Node(QGraphicsEllipseItem):
         self.title = ""
         self.visual_time = -1
         self.spike_index = 0
+        self.spiking = False
         
         self.setToolTip(f"Node ID: {self.id}\nNode Type: {self.nodeType}\nThreshold: {self.threshold}\nTitle: {self.title}\nSpike Vec: {self.spike_vec}")
 
@@ -81,6 +82,7 @@ class Node(QGraphicsEllipseItem):
         self.titlePath = QPainterPath()
         self.titleFont = QFont("Helvetica", 36)       
         self.draw_title()
+
 
         self.titlePathItem.setPath(self.titlePath)
 
@@ -126,12 +128,20 @@ class Node(QGraphicsEllipseItem):
             self.gradient.setColorAt(0, QColor(255, 255, 255, 255 ) ) 
             self.gradient.setColorAt(1, QColor(72, 159, 233, 255 ) )       
 
+        if(self.spiking):
+            self.gradient.setColorAt(1, QColor(255, 255, 255, 255))
+
     def update(self):
         print(self.visual_time)
-        if len(self.spike_vec) > self.spike_index:
-            if self.spike_vec[self.spike_index] > self.visual_time:
-                print("--] Spike!")
-                self.spike_index += 1
+        elapsed_spikes = []
+        for spike in self.spike_vec:
+            if spike > self.visual_time:
+                break
+            elapsed_spikes.append(spike)
+        
+        for most_recent_spike in elapsed_spikes:
+            if most_recent_spike-0.25 < self.visual_time:
+                self.spiking = True
         self.makeGradient()
         self.setBrush( QBrush(self.gradient) )
         self.setToolTip(f"Node ID: {self.id}\nNode Type: {self.nodeType}\nThreshold: {self.threshold}\nTitle: {self.title}\nSpike Vec: {self.spike_vec}")
