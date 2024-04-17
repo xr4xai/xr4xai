@@ -59,7 +59,7 @@ from PyQt6.QtCore import (
 
 import os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/../snn" )
-import test_network
+# import test_network
 import network_communication
 
 import math
