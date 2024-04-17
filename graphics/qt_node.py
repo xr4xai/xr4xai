@@ -85,6 +85,10 @@ class Node(QGraphicsEllipseItem):
 
 
         self.titlePathItem.setPath(self.titlePath)
+    
+    def setSelected(self, selected: bool) -> None:
+        self.parent.setSelectedItem(self)
+        return super().setSelected(selected)
 
     def draw_title(self):
 
@@ -99,8 +103,14 @@ class Node(QGraphicsEllipseItem):
         self.parent.updateEdges()
         return super().mousePressEvent(event)
 
+    def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent | None) -> None:
+        print("Node: is being dragged")
+        self.update()
+        self.parent.updateEdges(self.id)
+        return super().mouseMoveEvent(event)
+
     def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent) -> None:
-        print("Release")
+        print("Node: Release")
         self.update()
         self.parent.updateEdges()
         return super().mouseReleaseEvent(event)
@@ -139,7 +149,6 @@ class Node(QGraphicsEllipseItem):
         self.spiking = False 
 
     def update(self):
-        print(self.visual_time)
         elapsed_spikes = []
         for spike in self.spike_vec:
             if spike > self.visual_time:

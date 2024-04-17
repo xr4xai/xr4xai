@@ -70,6 +70,8 @@ class Edge(QGraphicsPathItem):
        
         self.draw_edge()
 
+        self.setFlags(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
+
         self.setPath(self.path)
 
     # Update is called whenever the GraphicsView updates the edge
@@ -131,7 +133,7 @@ class Edge(QGraphicsPathItem):
 
             # Determines how far along the spike is
             distance_along_edge = (self.visual_time - most_recent_spike) / self.delay
-            print(distance_along_edge)
+            print(f"Edge: {distance_along_edge}")
             if distance_along_edge < 0  or distance_along_edge > 1 :
                 continue
 
@@ -151,7 +153,7 @@ class Edge(QGraphicsPathItem):
             cy = offy + self.sourceNode.pos().y() + distance_along_edge * ( self.sinkNode.pos().y() - self.sourceNode.pos().y() - offy )
 
             # Debug:
-            print(f"{self.sourceNode.id}->{self.sinkNode.id} is drawing a spike at {cx} {cy}. dist_along = {distance_along_edge}")
+            print(f"Edge: {self.sourceNode.id}->{self.sinkNode.id} is drawing a spike at {cx} {cy}. dist_along = {distance_along_edge}")
 
             # Adds the spike to path
             self.path.addEllipse(QPointF(cx, cy) , 15, 15)

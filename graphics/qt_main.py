@@ -89,12 +89,26 @@ class AGraphicsView(QGraphicsView):
         self.dictOfEdges = {}
         self.dictOfNodes = {}
         self.edgeBuf = []
+
+        self.selectedItem = None
+        self.scene.selectionChanged.connect(self.selectionChanged)
     
         self.createTestNetwork()
         self.spike_vec = test_network.test_net_spike_vec()
         
         self.updateEdges()
         self.updateNodes()
+    
+    def setSelectedItem(self, item):
+        print(f"\n\n\nMain: Item selected: {item}")
+        self.selectedItem = item
+
+    def selectionChanged(self):
+        selectedItems = self.scene.selectedItems()
+        if len(selectedItems) > 0:
+            self.selectedItem = selectedItems[0]
+            if (type(self.selectedItem) == Node):
+                print(f"Main: Node {self.selectedItem.id} selected")
 
 
     # This creates the test network. It will be usurped by code that
@@ -226,7 +240,7 @@ class AGraphicsView(QGraphicsView):
 
     # If the buttons pressed, set a flag so the next click creates a node
     def addNodePressed(self):
-        print("Add node pressed!")
+        print("Main: Add node pressed!")
         self.addNode = True
 
     # connectNodes is currently passed to the node classes as the function called
@@ -235,7 +249,7 @@ class AGraphicsView(QGraphicsView):
     def connectNodes(self, obj): 
        
         if(type(obj) is not Node):
-            print("Error in connectNodes: obj is type ", type(obj) )
+            print("Main: Error in connectNodes: obj is type ", type(obj) )
             return
 
         id = obj.id
@@ -246,7 +260,7 @@ class AGraphicsView(QGraphicsView):
             self.edgeBuf.append([id, obj])
             linkStr = f"{self.edgeBuf[0][0]}->{id}"
             if linkStr not in self.dictOfEdges:
-                print(self.edgeBuf)
+                print(f"Main: self.edgeBuf")
                 obj1 = self.edgeBuf[0][1]
                 
                 edge = Edge(obj1, obj) 
@@ -278,7 +292,7 @@ class AGraphicsView(QGraphicsView):
 
 
     # Goes through all edges and tells them to update
-    def updateEdges(self):
+    def updateEdges(self, nodeID=-999):
 
         for e in self.dictOfEdges:
             
@@ -286,8 +300,12 @@ class AGraphicsView(QGraphicsView):
                 self.dictOfEdges[e].spike_vec = self.spike_vec[ self.dictOfEdges[e].sourceNode.id ]
             self.dictOfEdges[e].visual_time = self.visual_time
 
-
-            self.dictOfEdges[e].update()
+            if (nodeID == -999):
+                print("Main: Update All")
+                self.dictOfEdges[e].update()
+            elif (self.dictOfEdges[e].sourceNode.id == nodeID or self.dictOfEdges[e].sinkNode.id == nodeID):
+                print("Main: Update one")
+                self.dictOfEdges[e].update()
 
     # Creates all the actions (and connects them to appropriate functions)
     # for anything and everything that might be used in a menu
