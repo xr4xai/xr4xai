@@ -228,8 +228,11 @@ class AGraphicsView(QGraphicsView):
         
 
     # Creates a node at user click positon 
-    def addNodeEvent(self, type):
-        node = Node(self, self.mostRecentEvent.pos().x(), self.mostRecentEvent.pos().y(), self.curId, type)
+    def addNodeEvent(self, type, pos=None):
+        if (pos == None):
+            pos = self.mostRecentEvent.pos()
+
+        node = Node(self, pos.x(), pos.y(), self.curId, type)
         self.dictOfNodes[self.curId] = node
         self.curId+=1
 
@@ -566,6 +569,7 @@ class Layout(QWidget):
         self.view = AGraphicsView(self.scene, self)
         
         self.timebox = QHBoxLayout(self)
+        self.ribbon = QVBoxLayout(self)
 
         self.play_button = QPushButton("&Play",self)
         self.is_playing = False
@@ -605,7 +609,20 @@ class Layout(QWidget):
         self.timebox.addWidget(self.timelabel)
         self.timebox.addWidget(self.maxText)
 
-        vbox.addLayout(self.timebox)
+        self.edge_ribbon = QHBoxLayout(self)
+
+        self.weight_slider = QSlider(Qt.Orientation.Horizontal, self)
+        self.weight_slider.setRange(0, 2000)
+        self.visual_time = 0
+        self.weight_slider.setValue(0)
+        self.weight_slider.move(25, 25)
+
+        self.edge_ribbon.addWidget(self.weight_slider)
+
+        self.ribbon.addLayout(self.timebox)
+        self.ribbon.addLayout(self.edge_ribbon)
+
+        vbox.addLayout(self.ribbon)
         vbox.addWidget(self.view)
 
         menuBar = QMenuBar(self)    
