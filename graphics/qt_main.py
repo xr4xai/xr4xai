@@ -94,8 +94,8 @@ class AGraphicsView(QGraphicsView):
         self.scene.selectionChanged.connect(self.selectionChanged)
     
         self.createTestNetwork()
-        self.spike_vec = test_network.test_net_spike_vec()
-        
+        self.updateVecs() 
+
         self.updateEdges()
         self.updateNodes()
     
