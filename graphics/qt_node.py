@@ -86,9 +86,9 @@ class Node(QGraphicsEllipseItem):
 
         self.titlePathItem.setPath(self.titlePath)
     
-    def setSelected(self, selected: bool) -> None:
-        self.parent.setSelectedItem(self)
-        return super().setSelected(selected)
+    # def setSelected(self, selected: bool) -> None:
+    #     self.parent.setSelectedItem(self)
+    #     return super().setSelected(selected)
 
     def draw_title(self):
 

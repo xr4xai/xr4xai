@@ -72,13 +72,19 @@ from qt_edge import Edge
 class AGraphicsView(QGraphicsView):
     def __init__(self, scene: QGraphicsScene, layout: QLayout):
         super().__init__(scene)
-        self.scene = scene
-        self.layout = layout
+        self.scene: QGraphicsScene = scene
+        self.layout: QLayout = layout
     
         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
         self.centerOn(400,300)
 
+        self.createNoneRibbon()
+        self.createNodeRibbon()
+        self.createEdgeRibbon()
+
         self.createMenuActions()
+
+        # self.none_ribbon = self.getNoneRibbon()
 
         self.visual_time = 0
         self.minimum_time = 0
@@ -98,19 +104,8 @@ class AGraphicsView(QGraphicsView):
 
         self.updateEdges()
         self.updateNodes()
+
     
-    def setSelectedItem(self, item):
-        print(f"\n\n\nMain: Item selected: {item}")
-        self.selectedItem = item
-
-    def selectionChanged(self):
-        selectedItems = self.scene.selectedItems()
-        if len(selectedItems) > 0:
-            self.selectedItem = selectedItems[0]
-            if (type(self.selectedItem) == Node):
-                print(f"Main: Node {self.selectedItem.id} selected")
-
-
     # This creates the test network. It will be usurped by code that
     # creates networks from abitrary files/neuro instances
     def createTestNetwork(self):
@@ -160,6 +155,9 @@ class AGraphicsView(QGraphicsView):
                 self.rightClickBackground(event)
 
         elif(type(item) is Node):
+            # This is very much a temparary solution
+            self.scene.clearSelection()
+            item.setSelected(True)
 
             if(event.button() == Qt.MouseButton.RightButton):
                 self.rightClickNode(event)
@@ -168,13 +166,61 @@ class AGraphicsView(QGraphicsView):
                 self.connectNodes(item)
         
         elif(type(item) is Edge):
+            # This is very much a temparary solution
+            self.scene.clearSelection()
+            item.setSelected(True)
 
             if(event.button() == Qt.MouseButton.RightButton):
                 self.rightClickEdge(event)
 
-
-
         return super().mousePressEvent(event)
+
+
+    # This is called anytime that the slection is changed
+    def selectionChanged(self):
+        selectedItems = self.scene.selectedItems()
+        if len(selectedItems) > 0:
+            self.selectedItem = selectedItems[0]
+            if (type(self.selectedItem) == Node):
+                print(f"Main: Node {self.selectedItem.id} selected")
+    
+    # Creating the ribbon for when nothing is selected
+    def createNoneRibbon(self):
+        self.none_ribbon = QHBoxLayout()
+
+        self.add_input_button = QPushButton("Add &Input Node",self)
+        self.add_hidden_button = QPushButton("Add &Hidden Node",self)
+        self.add_output_button = QPushButton("Add &Output Node",self)
+
+        self.add_input_button.clicked.connect(lambda: self.addNodeEvent("input", QPointF(0, 0)))
+        self.add_hidden_button.clicked.connect(lambda: self.addNodeEvent("hidden", QPointF(0, 0)))
+        self.add_output_button.clicked.connect(lambda: self.addNodeEvent("output", QPointF(0, 0)))
+
+        self.none_ribbon.addWidget(self.add_input_button)
+        self.none_ribbon.addWidget(self.add_hidden_button)
+        self.none_ribbon.addWidget(self.add_output_button)
+
+    def createNodeRibbon(self):
+        self.node_ribbon = QHBoxLayout()
+        
+        self.weight_slider = QSlider(Qt.Orientation.Horizontal, self)
+        self.weight_slider.setRange(-10, 10)
+        self.weight_slider.setValue(0)
+        self.weight_slider.move(25, 25)
+
+        self.node_ribbon.addWidget(self.weight_slider)
+
+    def createEdgeRibbon(self):
+        self.edge_ribbon = QHBoxLayout()
+
+    def getNoneRibbon(self) -> QHBoxLayout:
+        return self.none_ribbon
+
+    def getNodeRibbon(self) -> QHBoxLayout:
+        return self.node_ribbon
+
+    def getEdgeRibbon(self) -> QHBoxLayout:
+        return self.edge_ribbon
 
     def rightClickBackground(self, event):
 
@@ -313,24 +359,19 @@ class AGraphicsView(QGraphicsView):
     # Creates all the actions (and connects them to appropriate functions)
     # for anything and everything that might be used in a menu
     def createMenuActions(self):
-        self.addNodeActionHidden = QAction(self)
-        self.addNodeActionHidden.setText("Hidden")
+        self.addNodeActionHidden = QAction(self, text="Hidden")
         self.addNodeActionHidden.triggered.connect(lambda: self.addNodeEvent("hidden"))
         
-        self.addNodeActionInput = QAction(self)
-        self.addNodeActionInput.setText("Input")
+        self.addNodeActionInput = QAction(self, text="Input")
         self.addNodeActionInput.triggered.connect(lambda: self.addNodeEvent("input"))
 
-        self.addNodeActionOutput = QAction(self)
-        self.addNodeActionOutput.setText("Output")
+        self.addNodeActionOutput = QAction(self, text="Output")
         self.addNodeActionOutput.triggered.connect(lambda: self.addNodeEvent("output"))
 
-        self.addEdgeAction = QAction(self)
-        self.addEdgeAction.setText("Create Edge")
+        self.addEdgeAction = QAction(self, text="Create Edge")
         self.addEdgeAction.triggered.connect(lambda: self.connectNodes(self.itemAt(self.mostRecentEvent.pos() )) ) 
 
-        self.editNodeTitleAction = QAction(self)
-        self.editNodeTitleAction.setText("Edit Node Title")
+        self.editNodeTitleAction = QAction(self, text="Edit Node Title")
         self.editNodeTitleAction.triggered.connect(lambda: self.editNodeTitle(self.itemAt(self.mostRecentEvent.pos() ) ) )
 
         self.editNodeThresholdAction = QAction(self)
@@ -564,12 +605,12 @@ class Layout(QWidget):
         super().__init__()
 
         vbox = QVBoxLayout(self)
+        self.ribbon = QVBoxLayout(self)
       
         self.scene = QGraphicsScene(-1500, -1500, 3000, 3000)
         self.view = AGraphicsView(self.scene, self)
         
         self.timebox = QHBoxLayout(self)
-        self.ribbon = QVBoxLayout(self)
 
         self.play_button = QPushButton("&Play",self)
         self.is_playing = False
@@ -609,18 +650,18 @@ class Layout(QWidget):
         self.timebox.addWidget(self.timelabel)
         self.timebox.addWidget(self.maxText)
 
-        self.edge_ribbon = QHBoxLayout(self)
 
-        self.weight_slider = QSlider(Qt.Orientation.Horizontal, self)
-        self.weight_slider.setRange(0, 2000)
-        self.visual_time = 0
-        self.weight_slider.setValue(0)
-        self.weight_slider.move(25, 25)
+        # Ribbon Implimentation {
+        self.view.scene.selectionChanged.connect(self.changedFocus)
+        self.selectedItem = None
 
-        self.edge_ribbon.addWidget(self.weight_slider)
+        self.curr_ribbon = self.view.getNoneRibbon()
+
+        # self.edge_ribbon.addWidget(self.weight_slider)
 
         self.ribbon.addLayout(self.timebox)
-        self.ribbon.addLayout(self.edge_ribbon)
+        self.ribbon.addLayout(self.curr_ribbon)
+        # }
 
         vbox.addLayout(self.ribbon)
         vbox.addWidget(self.view)
@@ -650,9 +691,30 @@ class Layout(QWidget):
         self.time_slider.setRange(self.view.minimum_time * self.tps, self.tps * self.view.maximum_time)
         
 
+    def changedFocus(self):
+        selectedItems = self.view.scene.selectedItems()
+        if len(selectedItems) > 0:
+            self.selectedItem = selectedItems[0]
+            if (type(self.selectedItem) == Node):
+                print(f"Main: Node {self.selectedItem.id} selected")
+                self.curr_ribbon.setParent(None)
+                self.curr_ribbon = self.view.getNodeRibbon()
+                self.ribbon.addLayout(self.curr_ribbon)
+
+            if (type(self.selectedItem) == Edge):
+                print(f"Main: Edge selected")
+                self.curr_ribbon.setParent(None)
+                self.curr_ribbon = self.view.getEdgeRibbon()
+                self.ribbon.addLayout(self.curr_ribbon)
+
+        elif(len(selectedItems) == 0):
+            self.curr_ribbon.setParent(None)
+            self.curr_ribbon = self.view.getNoneRibbon()
+            self.ribbon.addLayout(self.curr_ribbon)
+
     def playButtonClicked(self):
         if(self.is_playing):
-            self.play_button.setText("Play")
+            self.play_button.setText("&Play")
             self.is_playing = False
             self.timer.stop()
         else:
