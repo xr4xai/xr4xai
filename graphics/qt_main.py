@@ -78,9 +78,9 @@ class AGraphicsView(QGraphicsView):
         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
         self.centerOn(400,300)
 
-        self.createNoneRibbon()
-        self.createNodeRibbon()
-        self.createEdgeRibbon()
+        self.none_ribbon_list = self.createNoneRibbon()
+        self.none_ribbon_list = self.createNodeRibbon()
+        self.none_ribbon_list = self.createEdgeRibbon()
 
         self.createMenuActions()
 
@@ -188,9 +188,14 @@ class AGraphicsView(QGraphicsView):
     def createNoneRibbon(self):
         self.none_ribbon = QHBoxLayout()
 
+        list_of_widgets = []
         self.add_input_button = QPushButton("Add &Input Node",self)
         self.add_hidden_button = QPushButton("Add &Hidden Node",self)
         self.add_output_button = QPushButton("Add &Output Node",self)
+
+        list_of_widgets.append(self.add_input_button)
+        list_of_widgets.append(self.add_hidden_button)
+        list_of_widgets.append(self.add_output_button)
 
         self.add_input_button.clicked.connect(lambda: self.addNodeEvent("input", QPointF(0, 0)))
         self.add_hidden_button.clicked.connect(lambda: self.addNodeEvent("hidden", QPointF(0, 0)))
@@ -203,15 +208,54 @@ class AGraphicsView(QGraphicsView):
     def createNodeRibbon(self):
         self.node_ribbon = QHBoxLayout()
         
+        list_ribbon = []
+
         self.weight_slider = QSlider(Qt.Orientation.Horizontal, self)
         self.weight_slider.setRange(-10, 10)
         self.weight_slider.setValue(0)
         self.weight_slider.move(25, 25)
 
+        list_ribbon.append(self.weight_slider) 
+
         self.node_ribbon.addWidget(self.weight_slider)
+
+        return list_ribbon
 
     def createEdgeRibbon(self):
         self.edge_ribbon = QHBoxLayout()
+
+        edge_ribbon = []
+
+        self.e_weight_slider = QSlider(Qt.Orientation.Horizontal, self)
+        self.e_weight_slider.setRange(-10, 10)
+        self.e_weight_slider.setValue(0)
+        self.e_weight_slider.move(25, 25)
+
+        edge_ribbon.append(self.e_weight_slider)
+
+        return edge_ribbon
+
+    def changeRibbon(self, sel_type): 
+
+        if (sel_type == Node):
+            print(f"Main: Node {self.selectedItem.id} selected")
+            self.curr_ribbon.setParent(None)
+            self.curr_ribbon = self.view.getNodeRibbon()
+            self.ribbon.addLayout(self.curr_ribbon)
+
+        elif (sel_type == Edge):
+            print(f"Main: Edge selected")
+            self.curr_ribbon.setParent(None)
+            self.curr_ribbon = self.view.getEdgeRibbon()
+            self.ribbon.addLayout(self.curr_ribbon)
+
+        else:
+            self.curr_ribbon.setParent(None)
+            self.curr_ribbon = self.view.getNoneRibbon()
+            self.ribbon.addLayout(self.curr_ribbon)
+
+
+        
 
     def getNoneRibbon(self) -> QHBoxLayout:
         return self.none_ribbon
