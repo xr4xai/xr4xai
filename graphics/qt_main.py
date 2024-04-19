@@ -228,6 +228,8 @@ class AGraphicsView(QGraphicsView):
         self.e_weight_slider.setRange(-10, 10)
         self.e_weight_slider.setValue(0)
         self.e_weight_slider.move(25, 25)
+        self.weight_slider.setTickInterval(1)
+        self.e_weight_slider.valueChanged.connect(self.handleEWeightSlider)
 
         edge_ribbon.append(self.e_weight_slider)
 
@@ -237,12 +239,14 @@ class AGraphicsView(QGraphicsView):
 
     def hideAll(self):
         for list in [self.edge_ribbon_list, self.node_ribbon_list, self.none_ribbon_list]:
-            for widget in list:
-                widget.hide()
+            if len(list) > 0:
+                for widget in list:
+                    widget.hide()
     
     def unhideList(self, list):
-        for widget in list:
-            widget.show()
+        if len(list) > 0:
+            for widget in list:
+                widget.show()
 
     def changeRibbon(self, sel_type): 
         self.hideAll()
@@ -526,6 +530,11 @@ class AGraphicsView(QGraphicsView):
             
             node.input_spikes = input_spikes
             self.updateVecs()
+
+    def handleEWeightSlider(self, Weight):
+        print(Weight)
+        self.selectedItem.weight = float(Weight)/10
+        self.updateVecs()
         
     def editEdgeWeight(self, edge):
         
