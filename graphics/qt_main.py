@@ -80,13 +80,15 @@ class AGraphicsView(QGraphicsView):
 
         self.selectedItem = None
 
+        self.createMenuActions()
+
         self.ribbon: QHBoxLayout = QHBoxLayout()
         self.none_ribbon_list = self.createNoneRibbon()
         self.node_ribbon_list = self.createNodeRibbon()
         self.edge_ribbon_list = self.createEdgeRibbon()
 
         self.changeRibbon(None)
-        self.createMenuActions()
+
 
         # self.none_ribbon = self.getNoneRibbon()
 
@@ -211,15 +213,42 @@ class AGraphicsView(QGraphicsView):
     def createNodeRibbon(self):
         node_ribbon = []
 
+        self.thresholdLabel = QLabel(self)
+        self.thresholdLabel.setText("Threshold")
+
         self.threshold_slider = QSlider(Qt.Orientation.Horizontal, self)
         self.threshold_slider.setRange(-10, 10)
         self.threshold_slider.setValue(0)
         self.threshold_slider.move(25, 25)
+        self.threshold_slider.valueChanged.connect(self.handleNThresholdSlider)
+
+        self.threshold_text = QLineEdit(self, text="")
+        self.threshold_text.textChanged.connect(self.handleNThresholdText)
+        self.threshold_text.setMaximumWidth(50)        
+        self.threshold_text.setToolTip("Edge's Threshold")
+
+        self.n_input_button = QPushButton("Set &Input",self)
+        self.n_hidden_button = QPushButton("Set &Hidden",self)
+        self.n_hidden_button.setFlat(True)
+        self.n_output_button = QPushButton("Set &Output",self)
+
+        self.change_menu = QMenu(self)
+        nodeTypeMenu = self.change_menu.addMenu("Change Node Type")
+        nodeTypeMenu.setLayoutDirection()
+        nodeTypeMenu.addAction(self.editNodeTypeInputAction)
+        nodeTypeMenu.addAction(self.editNodeTypeHiddenAction)
+        nodeTypeMenu.addAction(self.editNodeTypeOutputAction)
 
         self.n_delete_button = QPushButton("&Delete",self)
         self.n_delete_button.clicked.connect(self.handleNDelete)
 
+        node_ribbon.append(self.n_input_button) 
+        node_ribbon.append(self.n_hidden_button) 
+        node_ribbon.append(self.n_output_button) 
+        node_ribbon.append(self.change_menu)
+        node_ribbon.append(self.thresholdLabel) 
         node_ribbon.append(self.threshold_slider) 
+        node_ribbon.append(self.threshold_text) 
         node_ribbon.append(self.n_delete_button)
 
         for widget in node_ribbon:
@@ -279,6 +308,7 @@ class AGraphicsView(QGraphicsView):
     def updateRibbon(self):
         if type(self.selectedItem) == Node:
             self.threshold_slider.setValue(int(self.selectedItem.threshold * 10))
+            self.threshold_text.setText(str(self.selectedItem.threshold))
         if type(self.selectedItem) == Edge:
             self.e_weight_slider.setValue(int(self.selectedItem.weight * 10))
             self.e_weight_text.setText(str(self.selectedItem.weight))
@@ -466,18 +496,14 @@ class AGraphicsView(QGraphicsView):
         self.editNodeThresholdAction.setText("Edit Node Threshold")
         self.editNodeThresholdAction.triggered.connect(lambda: self.editNodeThreshold(self.itemAt(self.mostRecentEvent.pos() ) ) )
 
-        self.editNodeTypeInputAction = QAction(self)
-        self.editNodeTypeInputAction.setText("Input")
-        self.editNodeTypeInputAction.triggered.connect(lambda: self.editNodeType(self.itemAt(self.mostRecentEvent.pos()), "input" ) )
+        self.editNodeTypeInputAction = QAction("Input", self)
+        self.editNodeTypeInputAction.triggered.connect(lambda: self.editNodeType(self.selectedItem, "input" ))
 
-
-        self.editNodeTypeHiddenAction = QAction(self)
-        self.editNodeTypeHiddenAction.setText("Hidden")
-        self.editNodeTypeHiddenAction.triggered.connect(lambda: self.editNodeType(self.itemAt(self.mostRecentEvent.pos()), "hidden" ) ) 
+        self.editNodeTypeHiddenAction = QAction("Hidden", self)
+        self.editNodeTypeHiddenAction.triggered.connect(lambda: self.editNodeType(self.selectedItem, "hidden" )) 
         
-        self.editNodeTypeOutputAction = QAction(self)
-        self.editNodeTypeOutputAction.setText("Output")
-        self.editNodeTypeOutputAction.triggered.connect(lambda: self.editNodeType(self.itemAt(self.mostRecentEvent.pos()), "output" ) ) 
+        self.editNodeTypeOutputAction = QAction("Output", self)
+        self.editNodeTypeOutputAction.triggered.connect(lambda: self.editNodeType(self.selectedItem, "output" ) ) 
     
         self.editNodeInputSpikesAction = QAction(self)
         self.editNodeInputSpikesAction.setText("Edit Input Spikes")
@@ -531,6 +557,16 @@ class AGraphicsView(QGraphicsView):
         if ok and text:
             node.title = text
             self.updateNodes()     
+
+    def handleNThresholdSlider(self, threshold):
+        self.selectedItem.threshold = float(threshold)/10
+        self.updateVecs()
+        self.updateRibbon()
+
+    def handleNThresholdText(self, threshold):
+        self.selectedItem.threshold = float(threshold)
+        self.updateVecs()
+        self.updateRibbon()
 
     def editNodeThreshold(self, node):
         
