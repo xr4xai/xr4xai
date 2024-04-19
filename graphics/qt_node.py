@@ -103,7 +103,7 @@ class Node(QGraphicsEllipseItem):
         self.parent.updateEdges()
         return super().mousePressEvent(event)
 
-    def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent | None) -> None:
+    def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         print("Node: is being dragged")
         self.update()
         self.parent.updateEdges(self.id)
