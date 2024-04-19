@@ -78,6 +78,8 @@ class AGraphicsView(QGraphicsView):
         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
         self.centerOn(400,300)
 
+        self.selectedItem = None
+
         self.ribbon: QHBoxLayout = QHBoxLayout()
         self.none_ribbon_list = self.createNoneRibbon()
         self.node_ribbon_list = self.createNodeRibbon()
@@ -98,7 +100,6 @@ class AGraphicsView(QGraphicsView):
         self.dictOfNodes = {}
         self.edgeBuf = []
 
-        self.selectedItem = None
         self.scene.selectionChanged.connect(self.selectionChanged)
     
         self.createTestNetwork()
@@ -208,34 +209,81 @@ class AGraphicsView(QGraphicsView):
         return list_of_widgets
 
     def createNodeRibbon(self):
-        list_ribbon = []
+        node_ribbon = []
 
-        self.weight_slider = QSlider(Qt.Orientation.Horizontal, self)
-        self.weight_slider.setRange(-10, 10)
-        self.weight_slider.setValue(0)
-        self.weight_slider.move(25, 25)
+        self.threshold_slider = QSlider(Qt.Orientation.Horizontal, self)
+        self.threshold_slider.setRange(-10, 10)
+        self.threshold_slider.setValue(0)
+        self.threshold_slider.move(25, 25)
 
-        list_ribbon.append(self.weight_slider) 
+        self.n_delete_button = QPushButton("&Delete",self)
+        self.n_delete_button.clicked.connect(self.handleNDelete)
 
-        self.ribbon.addWidget(self.weight_slider)
+        node_ribbon.append(self.threshold_slider) 
+        node_ribbon.append(self.n_delete_button)
 
-        return list_ribbon
+        for widget in node_ribbon:
+            self.ribbon.addWidget(widget)
+
+        return node_ribbon
 
     def createEdgeRibbon(self):
         edge_ribbon = []
+
+        self.weightLabel = QLabel(self)
+        self.weightLabel.setText("Weight")
 
         self.e_weight_slider = QSlider(Qt.Orientation.Horizontal, self)
         self.e_weight_slider.setRange(-10, 10)
         self.e_weight_slider.setValue(0)
         self.e_weight_slider.move(25, 25)
-        self.weight_slider.setTickInterval(1)
+        self.threshold_slider.setTickInterval(1)
         self.e_weight_slider.valueChanged.connect(self.handleEWeightSlider)
 
-        edge_ribbon.append(self.e_weight_slider)
+        self.e_weight_text = QLineEdit(self, text="")
+        self.e_weight_text.textChanged.connect(self.handleEWeightText)
+        self.e_weight_text.setMaximumWidth(50)        
+        self.e_weight_text.setToolTip("Edge's Weight")
 
-        self.ribbon.addWidget(self.e_weight_slider)
+        self.delayLabel = QLabel(self)
+        self.delayLabel.setText("Delay")
+
+        self.e_delay_slider = QSlider(Qt.Orientation.Horizontal, self)
+        self.e_delay_slider.setRange(10, 50)
+        self.e_delay_slider.setValue(0)
+        self.e_delay_slider.move(25, 25)
+        self.threshold_slider.setTickInterval(1)
+        self.e_delay_slider.valueChanged.connect(self.handleEDelaySlider)
+
+        self.e_delay_text = QLineEdit(self, text="")
+        self.e_delay_text.textChanged.connect(self.handleEDelayText)
+        self.e_delay_text.setMaximumWidth(50)        
+        self.e_delay_text.setToolTip("Edge's Delay")
+
+        self.e_delete_button = QPushButton("&Delete",self)
+        self.e_delete_button.clicked.connect(self.handleEDelete)
+
+        edge_ribbon.append(self.weightLabel)
+        edge_ribbon.append(self.e_weight_slider)
+        edge_ribbon.append(self.e_weight_text)
+        edge_ribbon.append(self.delayLabel)
+        edge_ribbon.append(self.e_delay_slider)
+        edge_ribbon.append(self.e_delay_text)
+        edge_ribbon.append(self.e_delete_button)
+
+        for widget in edge_ribbon:
+            self.ribbon.addWidget(widget)
 
         return edge_ribbon
+
+    def updateRibbon(self):
+        if type(self.selectedItem) == Node:
+            self.threshold_slider.setValue(int(self.selectedItem.threshold * 10))
+        if type(self.selectedItem) == Edge:
+            self.e_weight_slider.setValue(int(self.selectedItem.weight * 10))
+            self.e_weight_text.setText(str(self.selectedItem.weight))
+            self.e_delay_slider.setValue(int(self.selectedItem.delay * 10))
+            self.e_delay_text.setText(str(self.selectedItem.delay))
 
     def hideAll(self):
         for list in [self.edge_ribbon_list, self.node_ribbon_list, self.none_ribbon_list]:
@@ -253,12 +301,12 @@ class AGraphicsView(QGraphicsView):
 
         if (sel_type == Node):
             self.unhideList(self.node_ribbon_list)
-
         elif (sel_type == Edge):
             self.unhideList(self.edge_ribbon_list)
-
         else:
             self.unhideList(self.none_ribbon_list)
+
+        self.updateRibbon()
 
     def getRibbon(self) -> QHBoxLayout:
         return self.ribbon
@@ -272,7 +320,6 @@ class AGraphicsView(QGraphicsView):
         nodeTypeMenu.addAction(self.addNodeActionInput)
         nodeTypeMenu.addAction(self.addNodeActionHidden)
         nodeTypeMenu.addAction(self.addNodeActionOutput)
- 
 
         # Gotta love how to change everything for no reason in new Qt versions
         menu.exec(event.globalPosition().toPoint() )
@@ -498,8 +545,6 @@ class AGraphicsView(QGraphicsView):
 
             self.updateVecs()
 
-
-
     def editNodeType(self, node, newtype):
 
         node.nodeType = newtype
@@ -525,16 +570,19 @@ class AGraphicsView(QGraphicsView):
 
                 except ValueError:
                     print(x + " in input not castable to int.")
-
-
             
             node.input_spikes = input_spikes
             self.updateVecs()
 
     def handleEWeightSlider(self, Weight):
-        print(Weight)
         self.selectedItem.weight = float(Weight)/10
         self.updateVecs()
+        self.updateRibbon()
+
+    def handleEWeightText(self, Weight):
+        self.selectedItem.weight = float(Weight)
+        self.updateVecs()
+        self.updateRibbon()
         
     def editEdgeWeight(self, edge):
         
@@ -548,6 +596,17 @@ class AGraphicsView(QGraphicsView):
                     print(text, " is not castable to float")
 
             self.updateVecs()
+        self.updateRibbon()
+
+    def handleEDelaySlider(self, delay):
+        self.selectedItem.delay = float(delay)/10
+        self.updateVecs()
+        self.updateRibbon()
+
+    def handleEDelayText(self, delay):
+        self.selectedItem.delay = float(delay)
+        self.updateVecs()
+        self.updateRibbon()
     
     def editEdgeDelay(self, edge):
         
@@ -561,6 +620,10 @@ class AGraphicsView(QGraphicsView):
                     print(text, " is not castable to float")
 
             self.updateVecs()
+        self.updateRibbon()
+    
+    def handleEDelete(self):
+        self.deleteEdge(self.selectedItem)
 
     def deleteEdge(self, edge):
         key = str(edge.sourceNode.id) + "->" + str(edge.sinkNode.id)
@@ -570,6 +633,12 @@ class AGraphicsView(QGraphicsView):
             self.scene.removeItem(edge)
         except KeyError:
             print("The key ", key, " is not in the dict somehow. Uhhhhhh. Idk how we could even get to this state.")
+
+        self.updateVecs()
+        self.updateRibbon()
+
+    def handleNDelete(self):
+        self.deleteNode(self.selectedItem)
     
     def deleteNode(self, node):
         key = node.id
@@ -589,7 +658,9 @@ class AGraphicsView(QGraphicsView):
 
         except KeyError:
             print("The key is not in the dict somehow. Uhhhhhh. Idk how we could even get to this state.")
- 
+
+        self.updateVecs()
+        self.updateRibbon()
 
 
     """
