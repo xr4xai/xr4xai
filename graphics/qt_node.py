@@ -55,7 +55,7 @@ class Node(QGraphicsEllipseItem):
         self.setPos(x, y)
         self.setZValue(10)
         
-        self.nodeType = nodeType
+        self.nodeType: str = nodeType
         self.spike_vec = []
         self.input_spikes = []
         self.threshold = 1

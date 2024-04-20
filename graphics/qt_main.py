@@ -32,6 +32,8 @@ from PyQt6.QtWidgets import (
     QLayout,
     QLabel,
     QTableWidget,
+    QSpacerItem,
+    QSizePolicy
     )
 from PyQt6.QtGui import (
     QBrush, 
@@ -45,6 +47,8 @@ from PyQt6.QtGui import (
     QRadialGradient, 
     QLinearGradient,
     QAction,
+    QShortcut,
+    QKeySequence,
     )
 from PyQt6.QtCore import (
     QRectF, 
@@ -55,6 +59,7 @@ from PyQt6.QtCore import (
     QMimeData,
     QPointF,
     QTimer,
+    QKeyCombination
     )
 
 import os
@@ -213,39 +218,53 @@ class AGraphicsView(QGraphicsView):
     def createNodeRibbon(self):
         node_ribbon = []
 
+        self.type_buttons = {
+            "input": QPushButton("Set &Input",self),
+            "hidden": QPushButton("Set &Hidden",self),
+            "output": QPushButton("Set &Output",self)
+        }
+
+        self.type_buttons["input"].clicked.connect(lambda: self.editNodeType(self.selectedItem, "input"))
+        self.type_buttons["hidden"].clicked.connect(lambda: self.editNodeType(self.selectedItem, "hidden"))
+        self.type_buttons["output"].clicked.connect(lambda: self.editNodeType(self.selectedItem, "output"))
+
+        self.stretch1 = QWidget()
+        self.stretch1.setMinimumSize(30, 10)
+        self.stretch1.setMaximumSize(200, 10)
+        self.stretch1.setToolTip("Stretch")
+
+        self.add_edge_button = QPushButton("Create &Edge",self)
+        self.add_edge_button.addAction(self.addEdgeAction)
+        self.add_edge_button.clicked.connect(self.addEdgeAction.triggered)
+
         self.thresholdLabel = QLabel(self)
-        self.thresholdLabel.setText("Threshold")
+        self.thresholdLabel.setText("&Threshold")
+        self.thresholdLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # self.thresholdLabel.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        self.thresholdLabel.setMaximumSize(self.thresholdLabel.size())
 
         self.threshold_slider = QSlider(Qt.Orientation.Horizontal, self)
         self.threshold_slider.setRange(-10, 10)
-        self.threshold_slider.setValue(0)
+        self.threshold_slider.setMaximumSize(300, 20)
+        self.threshold_slider.setMinimumSize(100, 20)
         self.threshold_slider.move(25, 25)
         self.threshold_slider.valueChanged.connect(self.handleNThresholdSlider)
+        self.thresholdLabel.setBuddy(self.threshold_slider)
 
         self.threshold_text = QLineEdit(self, text="")
         self.threshold_text.textChanged.connect(self.handleNThresholdText)
         self.threshold_text.setMaximumWidth(50)        
         self.threshold_text.setToolTip("Edge's Threshold")
 
-        self.n_input_button = QPushButton("Set &Input",self)
-        self.n_hidden_button = QPushButton("Set &Hidden",self)
-        self.n_hidden_button.setFlat(True)
-        self.n_output_button = QPushButton("Set &Output",self)
-
-        self.change_menu = QMenu(self)
-        nodeTypeMenu = self.change_menu.addMenu("Change Node Type")
-        nodeTypeMenu.setLayoutDirection()
-        nodeTypeMenu.addAction(self.editNodeTypeInputAction)
-        nodeTypeMenu.addAction(self.editNodeTypeHiddenAction)
-        nodeTypeMenu.addAction(self.editNodeTypeOutputAction)
-
         self.n_delete_button = QPushButton("&Delete",self)
-        self.n_delete_button.clicked.connect(self.handleNDelete)
+        self.n_delete_button.addAction(self.deleteNodeAction)
+        self.n_delete_button.clicked.connect(self.deleteNodeAction.triggered)
 
-        node_ribbon.append(self.n_input_button) 
-        node_ribbon.append(self.n_hidden_button) 
-        node_ribbon.append(self.n_output_button) 
-        node_ribbon.append(self.change_menu)
+        for button in self.type_buttons.values():
+            node_ribbon.append(button) 
+
+        node_ribbon.append(self.stretch1)
+        node_ribbon.append(self.add_edge_button)
         node_ribbon.append(self.thresholdLabel) 
         node_ribbon.append(self.threshold_slider) 
         node_ribbon.append(self.threshold_text) 
@@ -290,7 +309,8 @@ class AGraphicsView(QGraphicsView):
         self.e_delay_text.setToolTip("Edge's Delay")
 
         self.e_delete_button = QPushButton("&Delete",self)
-        self.e_delete_button.clicked.connect(self.handleEDelete)
+        self.e_delete_button.addAction(self.deleteEdgeAction)
+        self.e_delete_button.clicked.connect(self.deleteEdgeAction.triggered)
 
         edge_ribbon.append(self.weightLabel)
         edge_ribbon.append(self.e_weight_slider)
@@ -309,6 +329,9 @@ class AGraphicsView(QGraphicsView):
         if type(self.selectedItem) == Node:
             self.threshold_slider.setValue(int(self.selectedItem.threshold * 10))
             self.threshold_text.setText(str(self.selectedItem.threshold))
+            for button in self.type_buttons.values():
+                button.setFlat(False)
+            self.type_buttons[self.selectedItem.nodeType].setFlat(True)
         if type(self.selectedItem) == Edge:
             self.e_weight_slider.setValue(int(self.selectedItem.weight * 10))
             self.e_weight_text.setText(str(self.selectedItem.weight))
@@ -487,7 +510,7 @@ class AGraphicsView(QGraphicsView):
         self.addNodeActionOutput.triggered.connect(lambda: self.addNodeEvent("output"))
 
         self.addEdgeAction = QAction(self, text="Create Edge")
-        self.addEdgeAction.triggered.connect(lambda: self.connectNodes(self.itemAt(self.mostRecentEvent.pos() )) ) 
+        self.addEdgeAction.triggered.connect(lambda: self.connectNodes(self.selectedItem) ) 
 
         self.editNodeTitleAction = QAction(self, text="Edit Node Title")
         self.editNodeTitleAction.triggered.connect(lambda: self.editNodeTitle(self.itemAt(self.mostRecentEvent.pos() ) ) )
@@ -517,13 +540,13 @@ class AGraphicsView(QGraphicsView):
         self.editEdgeDelayAction.setText("Edit Edge Delay")
         self.editEdgeDelayAction.triggered.connect(lambda: self.editEdgeDelay(self.itemAt(self.mostRecentEvent.pos() ) ) )
 
-        self.deleteEdgeAction = QAction(self)
-        self.deleteEdgeAction.setText("Delete Edge")
-        self.deleteEdgeAction.triggered.connect(lambda: self.deleteEdge(self.itemAt(self.mostRecentEvent.pos() ) ) )
+        self.deleteEdgeAction = QAction("Delete Edge", self)
+        self.deleteEdgeAction.setShortcuts([Qt.Key.Key_Backspace, Qt.Key.Key_Delete])
+        self.deleteEdgeAction.triggered.connect(lambda: self.deleteEdge(self.selectedItem) )
 
-        self.deleteNodeAction = QAction(self)
-        self.deleteNodeAction.setText("Delete Node")
-        self.deleteNodeAction.triggered.connect(lambda: self.deleteNode(self.itemAt(self.mostRecentEvent.pos() ) ) )
+        self.deleteNodeAction = QAction("Delete Node", self)
+        self.deleteNodeAction.setShortcuts([Qt.Key.Key_Backspace, Qt.Key.Key_Delete])
+        self.deleteNodeAction.triggered.connect(lambda: self.deleteNode(self.selectedItem ) )
     
     def saveNetworkToFile(self):
 
@@ -581,12 +604,13 @@ class AGraphicsView(QGraphicsView):
 
             self.updateVecs()
 
-    def editNodeType(self, node, newtype):
+    def editNodeType(self, node: Node, newtype: str):
 
         node.nodeType = newtype
 
         self.reorderNodeIds()
         self.updateVecs()
+        self.updateRibbon()
 
     def editInputSpikes(self, node):
 
