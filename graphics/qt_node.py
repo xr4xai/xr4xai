@@ -55,7 +55,7 @@ class Node(QGraphicsEllipseItem):
         self.setPos(x, y)
         self.setZValue(10)
         
-        self.nodeType = nodeType
+        self.nodeType: str = nodeType
         self.spike_vec = []
         self.input_spikes = []
         self.threshold = 1
@@ -103,7 +103,7 @@ class Node(QGraphicsEllipseItem):
         self.parent.updateEdges()
         return super().mousePressEvent(event)
 
-    def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent | None) -> None:
+    def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         print("Node: is being dragged")
         self.update()
         self.parent.updateEdges(self.id)
