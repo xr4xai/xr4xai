@@ -245,7 +245,7 @@ class AGraphicsView(QGraphicsView):
         self.thresholdLabel.setMaximumSize(self.thresholdLabel.size())
 
         self.threshold_slider = QSlider(Qt.Orientation.Horizontal, self)
-        self.threshold_slider.setRange(-10, 10)
+        self.threshold_slider.setRange(10 * network_communication.risp_config["min_threshold"], 10 * network_communication.risp_config["max_threshold"])
         self.threshold_slider.setMaximumSize(300, 20)
         self.threshold_slider.setMinimumSize(100, 20)
         self.threshold_slider.move(25, 25)
@@ -283,7 +283,7 @@ class AGraphicsView(QGraphicsView):
         self.weightLabel.setText("Weight")
 
         self.e_weight_slider = QSlider(Qt.Orientation.Horizontal, self)
-        self.e_weight_slider.setRange(-10, 10)
+        self.e_weight_slider.setRange(10 *  network_communication.risp_config["min_weight"], 10 *network_communication.risp_config["max_weight"])
         self.e_weight_slider.setValue(0)
         self.e_weight_slider.move(25, 25)
         self.threshold_slider.setTickInterval(1)
@@ -298,7 +298,7 @@ class AGraphicsView(QGraphicsView):
         self.delayLabel.setText("Delay")
 
         self.e_delay_slider = QSlider(Qt.Orientation.Horizontal, self)
-        self.e_delay_slider.setRange(10, 50)
+        self.e_delay_slider.setRange(10, 10 *  network_communication.risp_config["max_delay"])
         self.e_delay_slider.setValue(0)
         self.e_delay_slider.move(25, 25)
         self.threshold_slider.setTickInterval(1)
@@ -359,7 +359,8 @@ class AGraphicsView(QGraphicsView):
             self.unhideList(self.edge_ribbon_list)
         else:
             self.unhideList(self.none_ribbon_list)
-
+        
+        print("changeRibbon calling updateRibbon")
         self.updateRibbon()
 
     def getRibbon(self) -> QHBoxLayout:
@@ -558,8 +559,17 @@ class AGraphicsView(QGraphicsView):
 
             try:
                 network_communication.risp_config = json.loads(text)
+                
+                # Update ribbons and vecs
+
+                self.node_ribbon_list = self.createNodeRibbon()
+                self.edge_ribbon_list = self.createEdgeRibbon()
+
+                self.changeRibbon(None)
+
                 self.updateVecs()
-            
+           
+                
             except:
                 print("Uh oh! Didn't work!")
                 network_communication.risp_config = old
@@ -591,6 +601,10 @@ class AGraphicsView(QGraphicsView):
             for e in self.dictOfEdges.values():
                 self.scene.addItem(e)
 
+            # Update ribbons and vecs 
+            self.node_ribbon_list = self.createNodeRibbon()
+            self.edge_ribbon_list = self.createEdgeRibbon()
+            self.changeRibbon(None)
             self.updateVecs()
 
     def editNodeTitle(self, node):
@@ -607,9 +621,21 @@ class AGraphicsView(QGraphicsView):
         self.updateRibbon()
 
     def handleNThresholdText(self, threshold):
-        self.selectedItem.threshold = float(threshold)
-        self.updateVecs()
-        self.updateRibbon()
+        old = self.selectedItem.threshold
+
+        try:    
+            if (old != float(threshold)):
+                self.selectedItem.threshold = float(threshold)
+                
+                try:
+                    self.updateVecs()
+                    self.updateRibbon()
+                except:
+                    print("Probably out of threshold range")
+                    self.selectedItem.threshold = old
+
+        except ValueError:
+            print("Couldn't cast ", threshold, " to float")
 
     def editNodeThreshold(self, node):
         
@@ -659,11 +685,24 @@ class AGraphicsView(QGraphicsView):
         self.updateVecs()
         self.updateRibbon()
 
-    def handleEWeightText(self, Weight):
-        self.selectedItem.weight = float(Weight)
-        self.updateVecs()
-        self.updateRibbon()
-        
+    def handleEWeightText(self, weight):
+        old = self.selectedItem.weight
+
+        try:
+            if(old != float(weight)):
+                self.selectedItem.weight = float(weight)
+            
+                try:
+                    self.updateVecs()
+                    self.updateRibbon()
+                except:
+                    print("Probably out of weight range")
+                    self.selectedItem.weight = weight
+
+        except ValueError:
+            print("Couldn't cast ", weight, " to float")
+
+    
     def editEdgeWeight(self, edge):
         
         text, ok = QInputDialog.getText(self, "Edit Edge Weight", "Change Edge Weight", QLineEdit.EchoMode.Normal, str(edge.weight) )
@@ -684,9 +723,23 @@ class AGraphicsView(QGraphicsView):
         self.updateRibbon()
 
     def handleEDelayText(self, delay):
-        self.selectedItem.delay = float(delay)
-        self.updateVecs()
-        self.updateRibbon()
+        old = self.selectedItem.delay
+
+        try:
+            
+            if (old != float(delay)):
+                self.selectedItem.delay = float(delay)
+                
+                try:
+                    self.updateVecs()
+                    self.updateRibbon()
+                except:
+                    print("Probably out of delay range")
+                    self.selectedItem.delay = delay
+
+        except ValueError:
+            print("Couldn't cast ", delay, " to float")
+
     
     def editEdgeDelay(self, edge):
         
