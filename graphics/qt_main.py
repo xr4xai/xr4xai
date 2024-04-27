@@ -548,7 +548,23 @@ class AGraphicsView(QGraphicsView):
         self.deleteNodeAction = QAction("Delete Node", self)
         self.deleteNodeAction.setShortcuts([Qt.Key.Key_Backspace, Qt.Key.Key_Delete])
         self.deleteNodeAction.triggered.connect(lambda: self.deleteNode(self.selectedItem ) )
-    
+   
+    def editNetworkConfig(self):
+        
+        text, ok = QInputDialog.getMultiLineText(self, "Edit Network Config", "Network Config:", json.dumps(network_communication.risp_config, indent=4))
+
+        if ok and text:
+            old = network_communication.risp_config
+
+            try:
+                network_communication.risp_config = json.loads(text)
+                self.updateVecs()
+            
+            except:
+                print("Uh oh! Didn't work!")
+                network_communication.risp_config = old
+                
+
     def saveNetworkToFile(self):
 
          
@@ -857,6 +873,12 @@ class Layout(QWidget):
         self.openAction = QAction("Open", self.view)
         self.openAction.triggered.connect(self.view.openNetworkFile)
 
+        self.editConfigAction = QAction("Edit Network Configuration", self.view)
+        self.editConfigAction.triggered.connect(self.view.editNetworkConfig)
+
+
+        fileMenu.addAction(self.editConfigAction)
+        fileMenu.addSeparator()
         fileMenu.addAction(self.saveAction)
         fileMenu.addAction(self.openAction)
 
