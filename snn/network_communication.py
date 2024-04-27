@@ -85,11 +85,12 @@ def write_to_file(node_dict, edge_dict, filename):
 
         print(out_edge_dict)
 
-        out = {"nodes":out_node_dict, "edges":out_edge_dict}
+        out = {"config":risp_config, "nodes":out_node_dict, "edges":out_edge_dict}
         
         json.dump(out, file)
 
 def read_from_file(filename, parent):
+    global risp_config
 
     print("Opening file ", filename)
 
@@ -97,8 +98,15 @@ def read_from_file(filename, parent):
         
         dict = json.load(file)
 
+    
+    try:
+        risp_config = dict["config"]
+    except KeyError:
+        print("No 'config' key, using default")
+        
     in_node_dict = dict["nodes"]
     in_edge_dict = dict["edges"]
+
 
     node_dict = {}
     edge_dict = {}
