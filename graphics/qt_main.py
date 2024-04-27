@@ -33,7 +33,8 @@ from PyQt6.QtWidgets import (
     QLabel,
     QTableWidget,
     QSpacerItem,
-    QSizePolicy
+    QSizePolicy,
+    QFileDialog,
     )
 from PyQt6.QtGui import (
     QBrush, 
@@ -550,18 +551,21 @@ class AGraphicsView(QGraphicsView):
     
     def saveNetworkToFile(self):
 
-        fn, ok = QInputDialog.getText(self, "Save As", "Save Network to File: ", QLineEdit.EchoMode.Normal, "" )
-        
-        if ok and fn:
+         
+        fn  = QFileDialog.getSaveFileName(self, "Open File", "./", "JSON (*.json)")[0]
+
+
+        if fn != '':
             network_communication.write_to_file(self.dictOfNodes, self.dictOfEdges, fn)
 
 
     def openNetworkFile(self):
 
         
-        fn, ok = QInputDialog.getText(self, "Open", "File to Open:  ", QLineEdit.EchoMode.Normal, "" )
-        
-        if ok and fn:
+        fn  = QFileDialog.getOpenFileName(self, "Open File", "./", "JSON (*.json)")[0]
+        print(fn)
+
+        if fn != '':
             self.scene.clear()
 
             self.dictOfNodes, self.dictOfEdges = network_communication.read_from_file(fn, self)
