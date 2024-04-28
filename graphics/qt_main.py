@@ -70,6 +70,7 @@ import network_communication
 
 import math
 import json
+import numpy as np # April 28, 2024 - After three months of developement, finally imported numpy
 
 from qt_node import Node
 from qt_edge import Edge
@@ -466,7 +467,8 @@ class AGraphicsView(QGraphicsView):
         self.updateVecs()
 
     def updateVecs(self):
-        self.spike_vec = network_communication.get_vecs_from_dicts(self.dictOfNodes, self.dictOfEdges, min = self.minimum_time, max = self.maximum_time)
+        self.spike_vec, charges = network_communication.get_vecs_from_dicts(self.dictOfNodes, self.dictOfEdges, min = self.minimum_time, max = self.maximum_time)
+        self.charge_vec = np.array(charges).T
 
         self.updateNodes();
         self.updateEdges();
@@ -477,6 +479,8 @@ class AGraphicsView(QGraphicsView):
 
             if(n < len(self.spike_vec)):
                 self.dictOfNodes[n].spike_vec = self.spike_vec[ n ]
+                self.dictOfNodes[n].charge_vec = self.charge_vec[ n ]
+
             self.dictOfNodes[n].visual_time = self.visual_time
 
             self.dictOfNodes[n].update()
@@ -560,16 +564,17 @@ class AGraphicsView(QGraphicsView):
             try:
                 network_communication.risp_config = json.loads(text)
                 
+                self.updateVecs()
                 # Update ribbons and vecs
+                for l in [self.none_ribbon_list, self.node_ribbon_list, self.edge_ribbon_list]:
+                    for w in l:
+                        self.ribbon.removeWidget(w)
 
+                self.none_ribbon_list = self.createNoneRibbon()
                 self.node_ribbon_list = self.createNodeRibbon()
                 self.edge_ribbon_list = self.createEdgeRibbon()
-
                 self.changeRibbon(None)
-
-                self.updateVecs()
-           
-                
+ 
             except:
                 print("Uh oh! Didn't work!")
                 network_communication.risp_config = old
@@ -856,7 +861,8 @@ class Layout(QWidget):
 
         vbox = QVBoxLayout(self)
         self.ribbon = QVBoxLayout(self)
-      
+     
+
         self.scene = QGraphicsScene(-1500, -1500, 3000, 3000)
         self.view = AGraphicsView(self.scene, self)
         
@@ -981,7 +987,7 @@ class Layout(QWidget):
     def maxTextChanged(self):
         try:
             new_max = float(self.maxText.text() )
-            if(new_max > self.view.minimum_time and new_max >= 0):
+            if(new_max > self.view.minimum_time and new_max >= 0 and new_max <= 1000):
                 self.view.maximum_time = new_max
                 self.time_slider.setRange(self.view.minimum_time * self.tps, self.tps * self.view.maximum_time)
                 self.view.updateVecs()

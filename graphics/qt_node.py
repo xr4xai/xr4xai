@@ -54,9 +54,10 @@ class Node(QGraphicsEllipseItem):
         super().__init__(0-self.r, 0-self.r, self.d, self.d) 
         self.setPos(x, y)
         self.setZValue(10)
-        
+
         self.nodeType: str = nodeType
         self.spike_vec = []
+        self.charge_vec = [0]
         self.input_spikes = []
         self.threshold = 1
         self.title = ""
@@ -122,20 +123,20 @@ class Node(QGraphicsEllipseItem):
 
         # Gradients in QT are kkinda strange, and i'll have to come back and figure exactly where to set the center and focal point
         # for the gradients later. For now, the nodes just end up being a solid color
-        self.gradient = QRadialGradient(self.pos().x(), self.pos().y(), self.r, self.pos().x() + self.r /2 , self.pos().y() + self.r /2)
-
+        
+        self.gradient = QRadialGradient(0, 0, self.r, 0 + self.r*.6 , 0 + self.r *.6)
 
         # Different colors for different types of nodes. Taken from UTK colors
         if(self.nodeType == "input"): # Tennessee orange
-            self.gradient.setColorAt(0, QColor(255, 255, 255, 255 ) ) 
+            self.gradient.setColorAt(self.charge_vec[int(self.visual_time)] / self.threshold, QColor(255, 208, 158, 255 ) ) 
             self.gradient.setColorAt(1, QColor(255, 130, 0, 255 ) )
  
         if(self.nodeType == "hidden"): # gray (just gray)
-            self.gradient.setColorAt(0, QColor(150, 150, 150, 255 ) ) 
-            self.gradient.setColorAt(1, QColor(75, 75, 75, 255 ) )
+            self.gradient.setColorAt(self.charge_vec[int(self.visual_time)] / self.threshold, QColor(204, 204, 204, 255 ) ) 
+            self.gradient.setColorAt(1, QColor(105, 105, 105, 255 ) )
 
         if(self.nodeType == "output"): # Pat Summit blue
-            self.gradient.setColorAt(0, QColor(255, 255, 255, 255 ) ) 
+            self.gradient.setColorAt(self.charge_vec[int(self.visual_time)] / self.threshold, QColor(173, 212, 245, 255 ) ) 
             self.gradient.setColorAt(1, QColor(72, 159, 233, 255 ) )       
 
         if(self.spiking):
@@ -159,7 +160,7 @@ class Node(QGraphicsEllipseItem):
         
         self.makeGradient()
         self.setBrush( QBrush(self.gradient) )
-        self.setToolTip(f"Node ID: {self.id}\nNode Type: {self.nodeType}\nThreshold: {self.threshold}\nTitle: {self.title}\nSpike Vec: {self.spike_vec}")
+        self.setToolTip(f"Node ID: {self.id}\nNode Type: {self.nodeType}\nThreshold: {self.threshold}\nTitle: {self.title}\nCharge: {self.charge_vec[int(self.visual_time)]}\nSpike Vec: {self.spike_vec}")
         self.titlePath.clear()
         self.draw_title()
         self.titlePathItem.setPath(self.titlePath)

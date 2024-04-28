@@ -61,11 +61,25 @@ def get_vecs_from_dicts(node_dict, edge_dict, min = 0.0, max = 10.0):
     print(spikes)
     proc.apply_spikes(spikes)
 
+    c = []
+    for i in range(max + 1):
+        proc.run(1)
+        c.append(proc.neuron_charges() )
+
+    proc.load_network(net)
+    print(net)
+
+    for i in range(net.num_nodes()):
+        proc.track_neuron_events(i)
+
+    print(spikes)
+    proc.apply_spikes(spikes)
     proc.run(max)
     v = proc.neuron_vectors()
     print(v)
-
-    return v
+    
+        
+    return v, c
 
 def write_to_file(node_dict, edge_dict, filename):
 
