@@ -62,7 +62,7 @@ def get_vecs_from_dicts(node_dict, edge_dict, min = 0.0, max = 10.0):
     proc.apply_spikes(spikes)
 
     c = []
-    for i in range(max + 1):
+    for i in range(int(max) + 1):
         proc.run(1)
         c.append(proc.neuron_charges() )
 
