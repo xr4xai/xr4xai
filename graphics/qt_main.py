@@ -420,7 +420,9 @@ class AGraphicsView(QGraphicsView):
     # Creates a node at user click positon 
     def addNodeEvent(self, type, pos=None):
         if (pos == None):
-            pos = self.mostRecentEvent.pos()
+            pos = self.mapToScene(self.mostRecentEvent.pos())
+        else:
+            pos = self.mapToScene(200,200)
 
         node = Node(self, pos.x(), pos.y(), self.curId, type)
         self.dictOfNodes[self.curId] = node
