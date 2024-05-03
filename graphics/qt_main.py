@@ -35,6 +35,10 @@ from PyQt6.QtWidgets import (
     QSpacerItem,
     QSizePolicy,
     QFileDialog,
+    QDialogButtonBox,
+    QToolButton,
+    QDialog,
+    QScrollArea,
     )
 from PyQt6.QtGui import (
     QBrush, 
@@ -74,6 +78,79 @@ import numpy as np # April 28, 2024 - After three months of developement, finall
 
 from qt_node import Node
 from qt_edge import Edge
+
+class ToggleButtonDialog(QDialog):
+    def __init__(self, n, starting_toggle=None, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle('Select Options')
+
+        # Default toggled buttons array
+        if starting_toggle is None:
+            starting_toggle = []
+
+        main_layout = QVBoxLayout(self)
+
+        # Scroll area setup
+        scroll_area = QScrollArea(self)
+        scroll_area.setWidgetResizable(True)
+        main_layout.addWidget(scroll_area)
+
+        # Container widget for the toggle buttons
+        container_widget = QWidget()
+        button_layout = QVBoxLayout(container_widget)
+
+        # Create toggle buttons
+        self.toggle_buttons = []
+        for i in range(1, n+1):
+            button = QToolButton()
+            button.setText(str(i))
+            button.setCheckable(True)
+            button.setChecked(i in starting_toggle)
+            button.setStyleSheet("QToolButton { padding: 10px; text-align: left; }")
+            button_layout.addWidget(button)
+            button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+            self.toggle_buttons.append(button)
+
+        # Add container widget to scroll area
+        scroll_area.setWidget(container_widget)
+
+        # Advanced button
+        self.advanced_button = QPushButton("Advanced", self)
+        self.advanced_button.clicked.connect(self.edit_advanced)
+        main_layout.addWidget(self.advanced_button)
+
+        # Create QDialogButtonBox
+        self.button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        main_layout.addWidget(self.button_box)
+
+        # Connect signals
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
+
+    def edit_advanced(self):
+        input_string = "["
+        self.selected_numbers = [int(button.text()) for button in self.toggle_buttons if button.isChecked()]
+        for i in self.selected_numbers:
+            input_string += " " + str(i) + " , "
+
+        input_string += "]"
+
+        text, ok = QInputDialog.getText(self, "Input Spike Editor", "Edit Input Spikes:", QLineEdit.EchoMode.Normal, input_string )
+        
+        if ok and text:
+            input_spikes = []
+            for x in text.split(',') :
+                try:
+                    input_spikes.append( int(x.lstrip('[').rstrip(']').strip()) )
+
+                except ValueError:
+                    print(x + " in input not castable to int.")
+            self.selected_numbers = input_spikes
+            super().accept()
+
+    def accept(self):
+        self.selected_numbers = [int(button.text()) for button in self.toggle_buttons if button.isChecked()]
+        super().accept()  # Proceed with the accept process
 
 
 class AGraphicsView(QGraphicsView):
@@ -239,6 +316,10 @@ class AGraphicsView(QGraphicsView):
         self.add_edge_button.addAction(self.addEdgeAction)
         self.add_edge_button.clicked.connect(self.addEdgeAction.triggered)
 
+        self.edit_input_spikes_button = QPushButton("Edit Input &Spikes",self)
+        self.edit_input_spikes_button.addAction(self.editNodeInputSpikesAction)
+        self.edit_input_spikes_button.clicked.connect(self.editNodeInputSpikesAction.triggered)
+
         self.thresholdLabel = QLabel(self)
         self.thresholdLabel.setText("&Threshold")
         self.thresholdLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -266,6 +347,7 @@ class AGraphicsView(QGraphicsView):
             node_ribbon.append(button) 
 
         node_ribbon.append(self.stretch1)
+        node_ribbon.append(self.edit_input_spikes_button)
         node_ribbon.append(self.add_edge_button)
         node_ribbon.append(self.thresholdLabel) 
         node_ribbon.append(self.threshold_slider) 
@@ -334,6 +416,8 @@ class AGraphicsView(QGraphicsView):
             for button in self.type_buttons.values():
                 button.setFlat(False)
             self.type_buttons[self.selectedItem.nodeType].setFlat(True)
+            if self.selectedItem.nodeType != "input":
+                self.edit_input_spikes_button.hide()
         if type(self.selectedItem) == Edge:
             self.e_weight_slider.setValue(int(self.selectedItem.weight * 10))
             self.e_weight_text.setText(str(self.selectedItem.weight))
@@ -538,7 +622,7 @@ class AGraphicsView(QGraphicsView):
     
         self.editNodeInputSpikesAction = QAction(self)
         self.editNodeInputSpikesAction.setText("Edit Input Spikes")
-        self.editNodeInputSpikesAction.triggered.connect(lambda: self.editInputSpikes(self.itemAt(self.mostRecentEvent.pos()) ) ) 
+        self.editNodeInputSpikesAction.triggered.connect(lambda: self.editInputSpikes(self.selectedItem) ) 
     
         self.editEdgeWeightAction = QAction(self)
         self.editEdgeWeightAction.setText("Edit Edge Weight")
@@ -666,25 +750,9 @@ class AGraphicsView(QGraphicsView):
         self.updateRibbon()
 
     def editInputSpikes(self, node):
-
-        input_string = "["
-        for i in node.input_spikes:
-            input_string += " " + str(i) + " , "
-
-        input_string += "]"
-
-        text, ok = QInputDialog.getText(self, "Input Spike Editor", "Edit Input Spikes:", QLineEdit.EchoMode.Normal, input_string )
-        
-        if ok and text:
-            input_spikes = []
-            for x in text.split(',') :
-                try:
-                    input_spikes.append( int(x.lstrip('[').rstrip(']').strip()) )
-
-                except ValueError:
-                    print(x + " in input not castable to int.")
-            
-            node.input_spikes = input_spikes
+        dialog = ToggleButtonDialog(self.maximum_time, node.input_spikes)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            node.input_spikes = dialog.selected_numbers
             self.updateVecs()
 
     def handleEWeightSlider(self, Weight):
