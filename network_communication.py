@@ -1,5 +1,6 @@
 import neuro
 import risp
+import ravens
 
 import sys
 import os
@@ -9,7 +10,8 @@ from qt_edge import Edge
 
 import json
 
-risp_config = {
+configs = [
+{
   "leak_mode": "none",
   "min_weight": -1,
   "max_weight": 1,
@@ -17,11 +19,36 @@ risp_config = {
   "max_threshold": 1,
   "max_delay": 5,
   "discrete": False
+},
+{ # Stolen from the ravens readme
+  "min_weight": -8,
+  "max_weight": 7,
+  "max_delay": 8,
+  "min_threshold": 0,
+  "max_threshold": 15,
+  "min_standard_resting_potential": 0,
+  "max_standard_resting_potential": 0,
+  "min_refractory_resting_potential": -5,
+  "max_refractory_resting_potential": 0,
+  "min_absolute_refractory_period": 0,
+  "max_absolute_refractory_period": 4,
+  "min_relative_refractory_period": 0,
+  "max_relative_refractory_period": 5,
+  "min_leak": 0,
+  "max_leak": 2,
+  "stdp": [1, 2, 2, 3, 4, -4, -2, -1],
+  "spike_value_factor": 16
 }
+]
+
+neuroproc = 0 # 0 for RISP, 1 for Ravens
 
 def get_vecs_from_dicts(node_dict, edge_dict, min = 0.0, max = 10.0):
 
-    proc = risp.Processor(risp_config)
+    if(neuroproc == 0):
+        proc = risp.Processor(configs[0])
+    elif(neuroproc == 1):
+        proc = ravens.Processor(configs[1])
 
     net = neuro.Network()
     net.set_properties(proc.get_network_properties())
@@ -114,9 +141,11 @@ def read_from_file(filename, parent):
 
     
     try:
-        risp_config = dict["config"]
+        neuroproc = dict["proc"]
+        configs[neuroproc] = dict["config"]
     except KeyError:
-        print("No 'config' key, using default")
+        neuroporc = 0
+        print("Either no 'proc' or 'config' key, using RISP with default")
         
     in_node_dict = dict["nodes"]
     in_edge_dict = dict["edges"]
